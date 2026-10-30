@@ -11,4 +11,4 @@ Hosted on Vercel as a static site. Every push to `main` redeploys automatically.
 
 ## Syncing from the artifact
 
-After replacing `index.html` with the artifact's local copy, run `node scripts/add-vercel-extras.js` to re-add the Vercel-only extras (Web Analytics and the search links in `search-links.js`).
+After replacing `index.html` with the artifact's local copy, run `node scripts/add-vercel-extras.js` to re-add the Vercel-only extras (Web Analytics, the search links in `search-links.js` and the Quick tools tab in `quick-tools.js`).
