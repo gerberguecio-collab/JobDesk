@@ -1786,4 +1786,6 @@ let raf=0;const sched=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(r
     db.collection(k).onSnapshot(snap=>{const o={};snap.docs.forEach(d=>o[d.id]=d.data());RAW[k]=o;scope();if(k==='roles')sweep();sched()},err=>console.warn(k,err));
 })();
 </script>
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body></html>

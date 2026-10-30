@@ -8,3 +8,7 @@ Standalone version of the Job Desk artifact: a single static `index.html`.
 ## Deploy
 
 Hosted on Vercel as a static site. Every push to `main` redeploys automatically.
+
+## Syncing from the artifact
+
+After replacing `index.html` with the artifact's local copy, run `node scripts/add-analytics.js` to re-add Vercel Web Analytics.
