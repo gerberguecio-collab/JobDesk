@@ -601,8 +601,8 @@ const FIELDS=[['name','Your name'],['base','Where you live or want to work'],['p
 const LV=['Entry','Associate','Mid','Senior','Lead'],LY=['0-2 yrs','2-4 yrs','4-7 yrs','7-10 yrs','10+ yrs'];
 const IND=['Outdoor and sport','Consumer goods','Retail and e-commerce','Travel and tourism','Food and beverage','Tech and software','Finance and fintech','Health and wellness','Energy and mining','Sustainability and climate','Education','Public sector and nonprofit','Any industry'];
 const MODES=['Remote','Hybrid','On-site'];
-const SK=['Cooking','Sports','Outdoors','Excel','Power BI','SQL','Writing','Design','Photography','Languages','Public speaking','Data analysis','AI tools','Project management','Sales','Customer service'];
-const IN=['Mountain sports','Food and cooking','Travel','Technology','Sustainability','Fashion','Music','Fitness','Art and design','Reading','Gaming','Entrepreneurship','Learning new things','Community'];
+const SK=["Communication", "Writing", "Organizing and planning", "Working with people", "Leading a team", "Customer service", "Sales and negotiation", "Numbers and data", "Computers and software", "Creative work", "Teaching and training", "Hands-on or technical work", "Problem solving", "Research", "Languages", "Using AI tools"];
+const IN=["Technology", "Health and wellness", "Nature and outdoors", "Sports and fitness", "Food and travel", "Arts and culture", "Business and money", "Education and learning", "People and community", "Environment and sustainability", "Science", "Media and entertainment", "Fashion and design", "Helping others"];
 const tagSet=(f,sugg,ph)=>{const cur=P()[f]||[];const all=sugg.concat(cur.filter(x=>!sugg.includes(x)));return chipSet(f,all)+(canWrite?`<div class="row" style="margin-top:10px;gap:8px"><input type="text" id="tg-${f}" data-tgin="${f}" placeholder="${ph}" aria-label="${ph}" style="max-width:260px"><button class="btn sm alt" data-tadd="${f}">Add</button></div>`:'')};
 const chipSet=(f,list)=>`<div class="opts">${list.map(o=>`<button class="opt" data-pc="${f}" data-pv="${esc(o)}" aria-pressed="${(P()[f]||[]).includes(o)}" ${canWrite?'':'disabled'}>${esc(o)}</button>`).join('')}</div>`;
 const PSTEPS=['Basics','Level and pay','Work and industries','You','CV and words','Finish'];
@@ -630,8 +630,8 @@ function profile(){
    <label class="f" for="sal-cur">Currency<select id="sal-cur" data-sal="currency" ${canWrite?'':'disabled'}>${['CAD','USD','EUR','GBP','CLP','Other'].map(c=>`<option ${((p.currency||'CAD')===c)?'selected':''}>${c}</option>`).join('')}</select></label></div></section>`,
     work:`  <section class="box"><h2>Work mode</h2>${chipSet('workModes',MODES)}</section>`,
     ind:`  <section class="box"><h2>Industries</h2><p class="small muted">Pick any that interest you. "Any industry" lets the Scout explore freely.</p>${chipSet('industryList',IND)}</section>`,
-    know:`  <section class="box"><h2>What you know</h2><p class="small muted">Anything you are good at, work or not: cooking, sports, Excel, Power BI, Claude. The Matcher and Coach use it to find hidden strengths.</p>${tagSet('skills',SK,'Add your own')}</section>`,
-    int:`  <section class="box"><h2>What interests you</h2><p class="small muted">Topics you care about. The Scout uses these to spot roles you would not think to search for.</p>${tagSet('interests',IN,'Add your own')}</section>`,
+    know:`  <section class="box"><h2>What you know</h2><p class="small muted">Pick anything you are good at, at work or outside it. The Matcher and Coach use it to find hidden strengths.</p>${tagSet('skills',SK,'Add your own')}</section>`,
+    int:`  <section class="box"><h2>What interests you</h2><p class="small muted">Broad areas you enjoy. The Scout uses these to spot roles you would not think to search for.</p>${tagSet('interests',IN,'Add your own')}</section>`,
     li:`  <section class="box"><h2>Your LinkedIn</h2><p class="small muted">Optional. I cannot open LinkedIn for you, so the team reads what you give it here: your link, plus the text of your profile.</p>
    <label class="f" for="pf-linkedin">Profile link<input type="text" id="pf-linkedin" data-p="linkedin" value="${esc(p.linkedin||'')}" placeholder="e.g. linkedin.com/in/your-name" ${canWrite?'':'disabled'}></label>
    <div class="row" style="margin-top:10px"><label class="btn sm alt" for="li-file" style="cursor:pointer">Upload my LinkedIn PDF</label><input type="file" id="li-file" accept=".pdf,.doc,.docx,.txt" hidden ${canWrite?'':'disabled'}><span class="saved" id="lisv" role="status"></span></div>
@@ -1684,7 +1684,34 @@ const ES={
 "On LinkedIn, open your profile, choose More, then Save to PDF, and upload that file here. The team uses it with your CV.": "En LinkedIn, abre tu perfil, elige Más y luego Guardar como PDF, y sube ese archivo aquí. El equipo lo usa junto con tu CV.",
 "LinkedIn text read. Check it below.": "Texto de LinkedIn leído. Revísalo abajo.",
 "Overview": "Campamento base",
-"Base Camp": "Campamento base"
+"Base Camp": "Campamento base",
+"Pick anything you are good at, at work or outside it. The Matcher and Coach use it to find hidden strengths.": "Elige todo en lo que eres bueno, en el trabajo o fuera de él. El Matcher y el Coach lo usan para encontrar fortalezas ocultas.",
+"Broad areas you enjoy. The Scout uses these to spot roles you would not think to search for.": "Áreas amplias que disfrutas. El Scout las usa para detectar cargos que no se te ocurriría buscar.",
+"Communication": "Comunicación",
+"Organizing and planning": "Organización y planificación",
+"Working with people": "Trabajo con personas",
+"Leading a team": "Liderar un equipo",
+"Sales and negotiation": "Ventas y negociación",
+"Numbers and data": "Números y datos",
+"Computers and software": "Computación y software",
+"Creative work": "Trabajo creativo",
+"Teaching and training": "Enseñanza y capacitación",
+"Hands-on or technical work": "Trabajo manual o técnico",
+"Problem solving": "Resolución de problemas",
+"Research": "Investigación",
+"Using AI tools": "Uso de herramientas de IA",
+"Nature and outdoors": "Naturaleza y aire libre",
+"Sports and fitness": "Deportes y ejercicio",
+"Food and travel": "Comida y viajes",
+"Arts and culture": "Arte y cultura",
+"Business and money": "Negocios y dinero",
+"Education and learning": "Educación y aprendizaje",
+"People and community": "Personas y comunidad",
+"Environment and sustainability": "Medio ambiente y sostenibilidad",
+"Science": "Ciencia",
+"Media and entertainment": "Medios y entretenimiento",
+"Fashion and design": "Moda y diseño",
+"Helping others": "Ayudar a otros"
 };
 let LANG='en';try{LANG=localStorage.getItem('jd-lang')||((navigator.language||'').toLowerCase().startsWith('es')?'es':'en')}catch(e){}
 const pl=(n,a,b)=>n==1?a:b;
