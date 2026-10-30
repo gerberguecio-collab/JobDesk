@@ -1,0 +1,1762 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Job Desk</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap"><style>html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style><style>
+/* Layout: top bar with page tabs. Overview first (pipeline strip, attention list, news, team), then one page per helper, then a profile page that makes the desk reusable for anyone. */
+:root{
+  --bg:#F4F6F7; --surface:#FFFFFF; --ink:#15232B; --muted:#586972; --line:#E0E6E9; --soft:#EDF1F3;
+  --accent:#1D5E8A; --accent-ink:#FFFFFF;
+  --scout:#2E6F9E; --matcher:#6757A6; --coach:#A8702A; --super:#2B7A58;
+  --good:#2B7A58; --warn:#9A6A12; --bad:#B0432F;
+  --f:"Figtree","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F171B; --surface:#172228; --ink:#E5EDF0; --muted:#8FA3AD; --line:#27363D; --soft:#1F2D34;
+  --accent:#6FB2DE; --accent-ink:#0F171B; --scout:#6FB2DE; --matcher:#A99BE0; --coach:#E0A55F; --super:#6CC59A;
+  --good:#6CC59A; --warn:#E0B24F; --bad:#EE8D79; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F171B; --surface:#172228; --ink:#E5EDF0; --muted:#8FA3AD; --line:#27363D; --soft:#1F2D34;
+  --accent:#6FB2DE; --accent-ink:#0F171B; --scout:#6FB2DE; --matcher:#A99BE0; --coach:#E0A55F; --super:#6CC59A;
+  --good:#6CC59A; --warn:#E0B24F; --bad:#EE8D79; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f);padding-block:0 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.015em;text-wrap:balance}
+h1{font-size:28px;line-height:1.15} h2{font-size:17px} h3{font-size:15px}
+p{margin:0}
+.muted{color:var(--muted)} .small{font-size:13px}
+.top{display:flex;align-items:center;gap:20px;padding-block:14px;border-bottom:1px solid var(--line);margin-bottom:26px;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.brand i{width:22px;height:22px;border-radius:6px;background:var(--accent);display:inline-block}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;flex:1 1 640px;min-width:0}
+nav.tabs a{padding:7px 9px;border-radius:8px;color:var(--muted);text-decoration:none;font-weight:500;white-space:nowrap;display:flex;align-items:center;gap:7px}
+nav.tabs a:hover{background:var(--soft)}
+nav.tabs a[aria-current="page"]{background:var(--soft);color:var(--ink);font-weight:600}
+nav.tabs svg{width:16px;height:16px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.page{display:flex;flex-direction:column;gap:26px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.flow a{padding:16px 18px;text-decoration:none;color:inherit;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.flow a:last-child{border-right:0} .flow a:hover{background:var(--soft)}
+.flow b{font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.flow span{font-size:13px;color:var(--muted)}
+.flow em{font-style:normal;font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.cols{display:grid;grid-template-columns:1.1fr 1fr;gap:20px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.list{display:flex;flex-direction:column}
+.item{display:flex;gap:12px;justify-content:space-between;align-items:baseline;padding:10px 0;border-top:1px solid var(--line);text-decoration:none;color:inherit;background:none;border-left:0;border-right:0;border-bottom:0;font:inherit;text-align:left;width:100%;cursor:pointer}
+.list .item:first-child{border-top:0}
+.item:hover .t{color:var(--accent)}
+.item .t{font-weight:600}
+.news a{color:inherit;text-decoration:none} .news a:hover h3{text-decoration:underline}
+.news .src{font-size:12px;color:var(--muted)}
+.team{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.mate{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px}
+.mate:hover{border-color:var(--accent)}
+.ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none}
+.ic svg{width:19px;height:19px}
+.ic.scout{background:var(--scout)} .ic.matcher{background:var(--matcher)} .ic.coach{background:var(--coach)} .ic.super{background:var(--super)}
+.ic{color:var(--accent-ink)}
+.head{display:flex;gap:14px;align-items:center}
+.head .ic{width:46px;height:46px;border-radius:13px}.head .ic svg{width:26px;height:26px}
+.meta{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+.pill{font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.pill.strong{color:var(--good)} .pill.stretch{color:var(--warn)} .pill.long{color:var(--bad)}
+.pill.pri{background:var(--accent);color:var(--accent-ink)}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tool{display:grid;grid-template-columns:130px 1fr;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
+.tool:first-child{border-top:0} .tool b{font-weight:600}
+ul.tight{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+details>summary{cursor:pointer;font-weight:600;color:var(--accent)}
+label.f{display:flex;flex-direction:column;gap:5px;font-weight:600;font-size:13px}
+textarea,input[type=text]{width:100%;font:inherit;font-weight:400;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 11px;resize:vertical}
+textarea:focus,input[type=text]:focus{border-color:var(--accent);outline:0;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
+.btn{font:600 13.5px var(--f);background:var(--accent);color:var(--accent-ink);border:0;border-radius:9px;padding:8px 14px;cursor:pointer}
+.btn.alt{background:var(--soft);color:var(--ink)}
+.btn.bad{background:transparent;color:var(--bad);box-shadow:inset 0 0 0 1px var(--bad)}
+.saved{font-size:12px;color:var(--good);font-weight:600}
+.empty{color:var(--muted);font-size:14px;padding:6px 0}
+a{color:var(--accent)}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.two{display:grid;grid-template-columns:2fr 1fr;gap:20px}
+.q{display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--line)}
+.q:first-of-type{border-top:0;padding-top:0}
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,20,26,.45);z-index:30}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(500px,100%);background:var(--surface);z-index:31;overflow-y:auto;border-radius:16px 0 0 16px;box-shadow:-10px 0 40px rgba(0,0,0,.2);
+  padding:calc(18px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) 20px;display:flex;flex-direction:column;gap:14px}
+.drawer h2{font-size:21px;line-height:1.2}
+.stepper{display:flex;gap:2px;background:var(--soft);border-radius:10px;padding:3px}
+.stepper button{flex:1;font:600 12px var(--f);padding:7px 2px;border:0;background:none;color:var(--muted);border-radius:8px;cursor:pointer}
+.stepper button[aria-current="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.kv{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;margin:0;font-size:14px}
+.kv dt{color:var(--muted)} .kv dd{margin:0}
+.sec{display:flex;flex-direction:column;gap:4px}
+@media (max-width:860px){.cols,.two{grid-template-columns:1fr}.team{grid-template-columns:repeat(2,minmax(0,1fr))}.flow{grid-template-columns:repeat(2,minmax(0,1fr))}.flow a{border-bottom:1px solid var(--line)}.drawer{top:auto;max-height:92%;width:100%;border-radius:16px 16px 0 0}}
+@media (max-width:520px){h1{font-size:24px}.team,.fgrid{grid-template-columns:1fr}.tool{grid-template-columns:1fr;gap:0}}
+
+.ic{background:var(--soft)!important}
+.disc{border-radius:50%;background:var(--soft);display:grid;place-items:center;flex:none;overflow:hidden}
+.disc svg{width:100%;height:100%}
+.disc.sm{width:64px;height:64px}.disc.md{width:96px;height:96px}.disc.lg{width:136px;height:136px}
+.ch *{transform-box:fill-box}
+.br{animation:br 4.5s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes br{50%{transform:translateY(-2.5px)}}
+.bl{animation:bl 5s infinite;transform-origin:50% 50%}
+@keyframes bl{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.ear{animation:ear 6s ease-in-out infinite;transform-origin:50% 0}
+@keyframes ear{0%,88%,100%{transform:rotate(0)}93%{transform:rotate(-7deg)}}
+.sn{animation:sn 3.4s ease-in-out infinite;transform-origin:50% 50%}
+@keyframes sn{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+.tl{animation:tl 7s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes tl{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(4deg)}}
+.fl{animation:fl 3.6s ease-in-out infinite}
+@keyframes fl{50%{transform:translate(2px,-3px) rotate(4deg)}}
+.nd{animation:nd 5s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes nd{0%,100%{transform:rotate(0)}40%{transform:rotate(3deg) translateY(1.5px)}}
+@media (prefers-reduced-motion:reduce){.ch *{animation:none!important}}
+.item{align-items:center}
+.item .main{all:unset;cursor:pointer;flex:1;min-width:0;display:block}
+.item .main:hover .t{color:var(--accent)}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.btn.sm{padding:5px 10px;font-size:12.5px}
+.mc{border-top:1px solid var(--line);padding:14px 0;display:flex;flex-direction:column;gap:10px}
+.mc:first-child{border-top:0;padding-top:0}
+.fu{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fu h3{font-size:13px}.fu .good{color:var(--good)}.fu .bad{color:var(--bad)}
+.who{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;padding:20px 0;border-top:1px solid var(--line)}
+.who:first-of-type{border-top:0}
+.chain{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted);font-weight:600}
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.step{display:flex;flex-direction:column;gap:6px}
+select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chipb{font:500 12.5px var(--f);background:var(--soft);color:var(--ink);border:0;border-radius:999px;padding:5px 11px;cursor:pointer}
+.chipb:hover{background:var(--line)}
+.tr{padding:10px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:3px}
+@media (max-width:860px){.fu{grid-template-columns:1fr}.steps{grid-template-columns:repeat(2,minmax(0,1fr))}.who{grid-template-columns:1fr}}
+@media (max-width:520px){.item{flex-direction:column;align-items:stretch}.acts{justify-content:flex-start}.steps{grid-template-columns:1fr}}
+
+.disc.d-scout{background:color-mix(in srgb,var(--scout) 22%,var(--surface))}
+.disc.d-matcher{background:color-mix(in srgb,var(--matcher) 22%,var(--surface))}
+.disc.d-coach{background:color-mix(in srgb,var(--coach) 26%,var(--surface))}
+.disc.d-super{background:color-mix(in srgb,var(--super) 22%,var(--surface))}
+.opts{display:flex;gap:6px;flex-wrap:wrap}
+.opt{font:600 13px var(--f);background:var(--soft);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:6px 13px;cursor:pointer}
+.opt:hover{border-color:var(--accent)}
+.opt[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+.proc{display:flex;align-items:flex-start;overflow-x:auto;padding:4px 0 8px}
+.node{flex:1 0 118px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;position:relative;padding:0 6px}
+.node:not(:last-child)::after{content:"";position:absolute;top:32px;left:calc(50% + 38px);right:calc(-50% + 38px);height:2px;background:var(--line)}
+.node b{font-size:14px}.node span.d{font-size:12.5px;color:var(--muted)}
+.disc.you svg{width:30px;height:30px;color:var(--muted)}
+.lvl{display:flex;flex-direction:column;gap:6px}
+.lvl input[type=range]{width:100%;accent-color:var(--accent)}
+.ticks{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);font-weight:600}
+.range-lab{font-size:13px;font-weight:600;display:flex;justify-content:space-between}
+.sal{display:grid;grid-template-columns:1fr 1fr 110px;gap:10px}
+.bk{display:flex;flex-direction:column;gap:8px}
+
+.over{display:flex;gap:14px;align-items:center;border-top:3px solid var(--super);background:color-mix(in srgb,var(--super) 12%,var(--surface));border-radius:0 0 14px 14px;padding:12px 16px}
+.tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--super)}
+@media (max-width:860px){.steps[style]{grid-template-columns:1fr!important}}
+
+.dual{position:relative;height:34px;margin-top:4px}
+.dual .tr0{position:absolute;left:11px;right:11px;top:15px;height:4px;background:var(--line);border-radius:2px}
+.dual .fill{position:absolute;top:15px;height:4px;background:var(--accent);border-radius:2px}
+.dual input{position:absolute;left:0;top:0;width:100%;height:34px;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+.dual input::-webkit-slider-runnable-track{background:none;height:34px}
+.dual input::-moz-range-track{background:none;height:34px}
+.dual input::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;width:22px;height:22px;margin-top:6px;border-radius:50%;background:var(--surface);border:3px solid var(--accent);cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.dual input::-moz-range-thumb{pointer-events:auto;width:16px;height:16px;border-radius:50%;background:var(--surface);border:3px solid var(--accent);cursor:grab}
+.lvticks{position:relative;height:44px}
+.lvticks span{position:absolute;transform:translateX(-50%);text-align:center;font-size:12px;font-weight:600;color:var(--muted);line-height:1.25;width:76px}
+.lvticks span small{display:block;font-weight:500;font-size:11px;opacity:.85}
+.lvticks span.on{color:var(--ink)}
+.cvbox{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.sp{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:9px 0;border-top:1px solid var(--line)}
+.sp:first-of-type{border-top:0}
+.box.start{flex-direction:row;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-color:var(--accent);margin-bottom:18px}
+.bn{animation:bn 4.2s ease-in-out infinite;transform-origin:50% 50%}
+@keyframes bn{0%,100%{transform:translateX(-2px)}50%{transform:translateX(2px) translateY(-1px)}}
+.sw{animation:sw 4.2s ease-in-out infinite;transform-origin:50% 100%}
+.sf{animation:sf 3.8s ease-in-out infinite;transform-origin:45% 85%}
+@keyframes sf{0%,100%{transform:rotate(-2deg)}30%{transform:rotate(7deg)}45%{transform:rotate(4deg)}60%{transform:rotate(8deg)}80%{transform:rotate(-4deg) translateX(-2px)}}
+.sc{animation:sc 3.8s ease-in-out infinite}
+@keyframes sc{0%,100%{opacity:.15}50%{opacity:.9}}
+@keyframes sw{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+.tp{animation:tp 4s ease-in-out infinite;transform-origin:50% 0}
+@keyframes tp{50%{transform:rotate(2.5deg)}}
+.gl{animation:gl 6s ease-in-out infinite}
+@keyframes gl{0%,90%,100%{transform:translateY(0)}94%{transform:translateY(-1.8px)}}
+/* free-standing characters */
+.disc{border-radius:0;background:none;overflow:visible}
+.disc.d-scout,.disc.d-matcher,.disc.d-coach,.disc.d-super{background:none}
+.disc.you{background:var(--soft);border-radius:50%}
+.disc.sm{width:76px;height:76px}.disc.lg{width:164px;height:164px}.disc.xl{width:200px;height:200px}
+.disc:not(.you):not(.xl) svg{-webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}
+.head.own{--c:var(--accent);background:color-mix(in srgb,var(--c) 13%,var(--surface));border:1px solid color-mix(in srgb,var(--c) 30%,var(--line));border-radius:18px;padding:18px 28px 0;align-items:flex-end;gap:26px;overflow:hidden;margin-bottom:6px}
+.head.own>div:last-child{padding-bottom:26px}
+.head.own .disc.xl{margin-bottom:-2px}
+.head.own.o-scout{--c:var(--scout)}.head.own.o-matcher{--c:var(--matcher)}.head.own.o-coach{--c:var(--coach)}.head.own.o-super{--c:var(--super)}
+.mate{padding:0;gap:0;overflow:hidden}
+.mate.o-scout{--c:var(--scout)}.mate.o-matcher{--c:var(--matcher)}.mate.o-coach{--c:var(--coach)}.mate.o-super{--c:var(--super)}
+.mband{background:color-mix(in srgb,var(--c) 14%,var(--surface));display:flex;justify-content:center;align-items:flex-end;height:132px;padding-top:12px;overflow:hidden}
+.mband .disc.md{width:124px;height:124px;margin-bottom:-2px}
+.mband .disc:not(.you) svg{-webkit-mask-image:none;mask-image:none}
+.mate:hover .mband .ch{transform:translateY(-4px)}.mband .ch{transition:transform .25s}
+.mtxt{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px}
+.head.own{position:relative}
+.head.own>div:nth-child(2){padding-bottom:26px;max-width:46ch}
+.mission{font-size:14.5px;line-height:1.5;margin-top:8px;color:var(--ink)}
+.head.own .disc.xl{cursor:pointer}.head.own .disc.xl .ch{transition:transform .25s}.head.own .disc.xl:hover .ch{transform:translateY(-4px)}
+.head.own .disc.xl:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:12px}
+.bub{position:absolute;right:24px;top:22px;max-width:min(270px,44%);background:var(--surface);border:1px solid var(--line);border-radius:14px 14px 4px 14px;padding:10px 14px;font-size:13.5px;line-height:1.45;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.disc.act svg.ch{animation:hop .8s ease-out}
+@keyframes hop{0%{transform:none}30%{transform:translateY(-12px) rotate(-3deg)}60%{transform:translateY(0) rotate(2deg)}100%{transform:none}}
+.disc.act .sw{animation-duration:.8s}.disc.act .tp{animation-duration:.5s}.disc.act .gl{animation-duration:.5s}.disc.act .nd{animation-duration:.7s}.disc.act .bn{animation-duration:.8s}
+@media (max-width:640px){.bub{position:static;max-width:none;order:3;margin:0 0 16px}.head.own{flex-wrap:wrap}}
+.head.own{display:grid;grid-template-columns:auto minmax(0,1.3fr) minmax(0,1fr);align-items:end;gap:26px}
+.head.own>div:nth-child(2){max-width:none;padding-bottom:26px}
+.hpanel{align-self:center;display:flex;flex-direction:column;gap:12px;padding:16px 0 18px}
+.hstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hstats div{background:color-mix(in srgb,var(--c) 10%,var(--surface));border:1px solid color-mix(in srgb,var(--c) 22%,var(--line));border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.hstats b{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.hstats span{font-size:12px;color:var(--muted)}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-height:78px;display:flex;flex-direction:column;justify-content:center;gap:8px;font-size:13.5px;line-height:1.45}
+.stage .hint{color:var(--muted);font-style:italic}
+.say.note{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:color-mix(in srgb,var(--c) 8%,var(--surface));border-left:3px solid var(--c);padding:6px 10px;border-radius:4px;min-height:2.6em}
+.cur{display:inline-block;width:2px;height:1em;background:var(--ink);animation:cur .6s steps(2) infinite;vertical-align:text-bottom}@keyframes cur{50%{opacity:0}}
+.scan{display:flex;gap:6px}.scan i{width:100%;height:8px;border-radius:4px;background:var(--line);animation:scan .9s ease-out both}
+@keyframes scan{0%{background:var(--line)}40%{background:var(--c);transform:scaleY(1.8)}100%{background:color-mix(in srgb,var(--c) 45%,var(--line));transform:none}}
+.ruler{height:16px;border-radius:4px;background:#E8C547;border:1.5px solid #27333B;position:relative;overflow:hidden;width:0;animation:rul 1.1s ease-out forwards}
+.ruler i{position:absolute;inset:0;background:repeating-linear-gradient(90deg,#27333B 0 1.5px,transparent 1.5px 9px);-webkit-mask-image:linear-gradient(0deg,#000 45%,transparent 45%);mask-image:linear-gradient(0deg,#000 45%,transparent 45%)}
+@keyframes rul{to{width:100%}}
+.lk{animation:lk 5s ease-in-out infinite;transform-origin:45% 85%}
+@keyframes lk{0%,100%{transform:rotate(-2deg) translateX(-1px)}50%{transform:rotate(3deg) translateX(2px)}}
+.disc.act .lk{animation-duration:1s}
+.pw{opacity:0}
+.disc.act .pw{animation:pw 1.7s ease-in-out}
+@keyframes pw{0%{opacity:0;transform:translate(-14px,22px)}25%,70%{opacity:1;transform:translate(0,0)}100%{opacity:0;transform:translate(-14px,22px)}}
+.disc.act .gl{animation:glfix 1.7s ease-in-out}
+@keyframes glfix{0%{transform:none}25%{transform:translateY(5px) rotate(5deg)}45%{transform:translateY(-3px) rotate(-3deg)}70%,100%{transform:none}}
+.disc.act .tp{animation:tpx 1.2s ease-in-out}
+@keyframes tpx{0%,100%{transform:none}35%{transform:scaleX(1.12) rotate(-2deg)}65%{transform:scaleX(.96) rotate(2deg)}}
+@media (max-width:860px){.head.own{grid-template-columns:auto minmax(0,1fr)}.hpanel{grid-column:1/-1;padding-top:0}}
+@media (max-width:520px){.head.own{grid-template-columns:1fr}.head.own .disc.xl{margin:0 auto}}
+.rsrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.lu{animation:lu 4.6s ease-in-out infinite;transform-origin:45% 90%}
+@keyframes lu{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(-1deg) translateY(-1.5px)}}
+.vz{animation:vz 4.6s ease-in-out infinite;transform-origin:100% 50%}
+@keyframes vz{0%,100%{transform:rotate(0)}50%{transform:rotate(3deg) translateY(-1px)}}
+.disc.act .lu{animation-duration:1s}.disc.act .vz{animation-duration:.6s}
+.lang{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex:none}
+.lang button{font:600 12.5px var(--f);background:transparent;color:var(--muted);border:0;padding:6px 11px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.lang button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.led{animation:led 2.4s ease-in-out infinite}
+@keyframes led{0%,100%{opacity:.55}50%{opacity:1}}
+.lang+.lang{margin-left:-8px}
+.nk{animation:nk 5s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes nk{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(4deg)}}
+.pp{animation:pp 6s ease-in-out infinite}
+@keyframes pp{0%,100%{transform:translate(-1px,.6px)}35%{transform:translate(1.6px,-1.2px)}70%{transform:translate(.4px,1px)}}
+.sw2{animation:sw2 4.4s ease-in-out infinite;transform-origin:50% 0}
+@keyframes sw2{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+.disc.act .nk{animation:nks .9s ease-in-out}
+@keyframes nks{0%{transform:none}35%{transform:scaleY(1.14) rotate(6deg)}70%{transform:scaleY(.96) rotate(-4deg)}100%{transform:none}}
+.disc.act .pp{animation-duration:.8s}
+/* role-driven motion */
+.lu{animation:lu2 5.2s ease-in-out infinite}
+.lu .sn{animation-duration:.9s}
+@keyframes lu2{0%,100%{transform:rotate(0deg)}14%{transform:rotate(0deg)}20%{transform:rotate(5deg) translateY(2px)}25%{transform:rotate(1deg) translateY(1px)}30%{transform:rotate(5deg) translateY(2px)}35%{transform:rotate(1deg) translateY(1px)}40%{transform:rotate(5deg) translateY(2px)}62%{transform:rotate(-4deg) translateX(2px)}82%{transform:rotate(0deg)}}
+.dart{animation:dart 5.2s ease-in-out infinite}
+@keyframes dart{0%,100%{transform:translate(0,0)}26%{transform:translate(2px,-1.4px)}42%{transform:translate(-1.4px,.6px)}58%{transform:translate(1.6px,-1px)}78%{transform:translate(0,.8px)}}
+.cmpH{animation:cmpH 4.6s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes cmpH{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+.cmp{animation:cmp 4.6s ease-in-out infinite}
+@keyframes cmp{0%,100%{transform:translateX(-3px)}50%{transform:translateX(3px)}}
+.ink{stroke-dasharray:14;animation:ink 6s linear infinite}.ink2{animation-delay:.1s}.ink3{animation-delay:.2s}
+@keyframes ink{0%,2%{stroke-dashoffset:14}14%,60%{stroke-dashoffset:0}72%,100%{stroke-dashoffset:14}}
+.ink2{animation-name:ink2}.ink3{animation-name:ink3}
+@keyframes ink2{0%,16%{stroke-dashoffset:14}30%,60%{stroke-dashoffset:0}72%,100%{stroke-dashoffset:14}}
+@keyframes ink3{0%,32%{stroke-dashoffset:14}46%,60%{stroke-dashoffset:0}72%,100%{stroke-dashoffset:14}}
+.pen{animation:pen 6s ease-in-out infinite}
+@keyframes pen{0%{transform:translate(0,0)}14%{transform:translate(12px,0)}16%{transform:translate(0,6px)}30%{transform:translate(12px,6px)}32%{transform:translate(0,12px)}46%{transform:translate(8px,12px)}62%,100%{transform:translate(2px,-8px)}}
+.tick{stroke-dasharray:16;animation:tick 6s ease-in-out infinite}
+@keyframes tick{0%,10%{stroke-dashoffset:16}25%,85%{stroke-dashoffset:0}95%,100%{stroke-dashoffset:16}}
+.gl{animation:gli 9s ease-in-out infinite}
+@keyframes gli{0%,70%,100%{transform:none}73%{transform:translateY(4px) rotate(5deg)}79%{transform:translateY(-3px) rotate(-3deg)}86%{transform:none}}
+.pw{animation:pwi 9s ease-in-out infinite}
+@keyframes pwi{0%,68%,100%{opacity:0;transform:translate(-14px,22px)}72%,82%{opacity:1;transform:translate(0,0)}88%{opacity:0;transform:translate(-14px,22px)}}
+.disc.act .gl{animation:glfix 1.7s ease-in-out}.disc.act .pw{animation:pw 1.7s ease-in-out}
+.disc.act .cmpH,.disc.act .cmp{animation-duration:1.2s}.disc.act .pen,.disc.act .ink{animation-duration:2.4s}.disc.act .lu,.disc.act .dart{animation-duration:1.4s}
+/* ---- v2 ---- */
+.hm{display:none}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:13.5px;line-height:1.4;z-index:50;max-width:min(520px,calc(100% - 32px));box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.hint2{font-weight:400;font-size:12px;color:var(--muted);line-height:1.4}
+.linkb{all:unset;cursor:pointer;color:var(--accent);font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.linkb:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.wiz{display:flex;flex-direction:column;gap:12px}
+.wbar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.wbar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+.wsteps{display:flex;gap:6px;flex-wrap:wrap}
+.wst{font:600 13px var(--f);background:var(--soft);color:var(--muted);border:1px solid transparent;border-radius:999px;padding:7px 13px;cursor:pointer;white-space:nowrap}
+.wst[aria-current="true"]{background:var(--accent);color:var(--accent-ink)}
+.wfoot{justify-content:space-between}
+.wfoot .btn{min-width:110px}
+.qd{border-color:color-mix(in srgb,var(--super) 40%,var(--line))}
+.app{border-top:1px solid var(--line);padding:14px 0;display:flex;flex-direction:column;gap:10px}
+.app:first-of-type{border-top:0;padding-top:4px}
+.app .main{all:unset;cursor:pointer;flex:1;min-width:0;display:block}
+.app .main:hover .t{color:var(--accent)}.app .t{font-weight:600}
+.fudue{color:var(--warn);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hstats4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.hstats4 div{background:var(--soft);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column}
+.hstats4 b{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}.hstats4 span{font-size:12px;color:var(--muted)}
+.cmpw{overflow-x:auto}
+table.cmp{border-collapse:collapse;width:100%;font-size:13.5px;min-width:420px}
+table.cmp th,table.cmp td{text-align:left;vertical-align:top;padding:8px 10px;border-top:1px solid var(--line)}
+table.cmp thead th{border-top:0;font-weight:600;font-size:13.5px}
+table.cmp tbody th{color:var(--muted);font-weight:600;width:26%;font-size:12.5px}
+table.cmp td.win{background:color-mix(in srgb,var(--good) 14%,var(--surface));font-weight:600}
+table.cmp.mini{min-width:0;margin-top:10px}
+.cmpv{background:var(--soft);border-radius:10px;padding:10px 12px}
+.ideal .wide{grid-column:1/-1}
+.cc{border-top:1px solid var(--line);padding:14px 0;display:flex;flex-direction:column;gap:10px}
+.cc:first-of-type{border-top:0;padding-top:0}
+.chg{display:flex;flex-direction:column;gap:8px}
+.chk{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:13.5px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex:none}
+/* How it works palette */
+.node.o-scout{--c:var(--scout)}.node.o-matcher{--c:var(--matcher)}.node.o-coach{--c:var(--coach)}.node.o-super{--c:var(--super)}.node.o-you{--c:var(--accent)}
+.node b{color:var(--c)}
+.node:not(:last-child)::after{background:color-mix(in srgb,var(--c) 55%,var(--line));height:3px;border-radius:2px}
+.disc.you{background:color-mix(in srgb,var(--accent) 16%,var(--surface))}.disc.you svg{color:var(--accent)}
+.who{display:grid;grid-template-columns:200px minmax(0,1fr);gap:0;align-items:stretch;padding:0;border:1px solid color-mix(in srgb,var(--c) 28%,var(--line));border-radius:16px;overflow:hidden;background:color-mix(in srgb,var(--c) 6%,var(--surface));margin-top:14px}
+.who:first-of-type{border-top:1px solid color-mix(in srgb,var(--c) 28%,var(--line))}
+.who.o-scout{--c:var(--scout)}.who.o-matcher{--c:var(--matcher)}.who.o-coach{--c:var(--coach)}.who.o-super{--c:var(--super)}
+.wband{background:color-mix(in srgb,var(--c) 16%,var(--surface));display:flex;align-items:flex-end;justify-content:center;padding-top:14px;overflow:hidden}
+.wband .disc.lg{width:170px;height:170px;margin-bottom:-2px}
+.wband .disc svg{-webkit-mask-image:none;mask-image:none}
+.who>.sec{padding:18px 20px}
+.who h2{color:var(--c)}
+.step.o-scout{--c:var(--scout)}.step.o-matcher{--c:var(--matcher)}.step.o-coach{--c:var(--coach)}.step.o-super{--c:var(--super)}
+.step[class*="o-"]{border-top:3px solid var(--c);padding-top:10px}.step[class*="o-"] h3{color:var(--c)}
+.gloss{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 28px;margin:0}
+.gloss div{display:flex;flex-direction:column;gap:2px}.gloss dt{font-weight:600}.gloss dd{margin:0;font-size:13.5px;color:var(--muted)}
+/* phone */
+@media (max-width:640px){
+ body{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+ .top{gap:8px;margin-bottom:14px;padding-block:10px;flex-wrap:nowrap}
+ .brand{flex:1}
+ .hm{display:flex;gap:0}.hm a{width:40px;height:40px;display:grid;place-items:center;border-radius:10px;color:var(--muted)}.hm a svg{width:20px;height:20px}
+ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:6px max(6px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px));overflow:visible;flex:none;min-width:0}
+ nav.tabs a{flex-direction:column;gap:3px;font-size:11px;padding:6px 2px;min-height:48px;justify-content:center;text-align:center;border-radius:10px}
+ nav.tabs a[href="#team"],nav.tabs a[href="#profile"]{display:none}
+ nav.tabs svg{width:21px;height:21px}
+ #toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+ h1{font-size:23px}
+ .box{padding:14px}
+ .team{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}
+ .mband{height:92px;padding-top:8px}.mband .disc.md{width:84px;height:84px}
+ .mtxt{padding:10px 12px 12px;gap:2px}.mtxt p{display:none}.mtxt h3{font-size:14.5px}
+ .flow{grid-template-columns:repeat(2,minmax(0,1fr))}.flow a{padding:12px 14px}.flow a:last-child{grid-column:1/-1}.flow b{font-size:24px}
+ .head.own{grid-template-columns:104px minmax(0,1fr);gap:12px;padding:14px 14px 0;align-items:end}
+ .head.own .disc.xl{width:104px;height:104px;margin:0}
+ .head.own>div:nth-child(2){padding-bottom:12px}
+ .head.own h1{font-size:21px}.mission{font-size:13px;margin-top:4px}
+ .hpanel{grid-column:1/-1;padding:4px 0 14px}.stage{min-height:0;padding:10px 12px}
+ .hstats b{font-size:19px}
+ .fgrid{grid-template-columns:1fr}.sal{grid-template-columns:1fr 1fr}.sal label:last-child{grid-column:1/-1}
+ .opt,.chipb{min-height:44px;padding:8px 15px}
+ .btn{min-height:44px}.btn.sm{min-height:40px;padding:8px 13px}
+ .wsteps{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+ .wfoot .btn{flex:1}
+ .who{grid-template-columns:1fr}.wband{height:150px}
+ .gloss{grid-template-columns:1fr}
+ .hstats4{grid-template-columns:repeat(2,1fr)}
+ table.cmp{font-size:12.5px}
+ .lang button{min-height:36px}
+ .item{padding:12px 0}
+ .proc{padding-bottom:12px}
+}
+.acts a.btn{text-decoration:none;display:inline-flex;align-items:center}
+@media (max-width:640px){nav.tabs a{white-space:normal;line-height:1.1;font-size:10.5px}}
+</style></head><body>
+
+
+
+
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#overview" style="text-decoration:none;color:inherit"><i></i>Job Desk</a>
+    <nav class="tabs" id="tabs" aria-label="Pages"></nav>
+    <span class="hm"><a href="#team" aria-label="How it works" title="How it works"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.7 2.7 0 1 1 3.8 2.4c-.9.5-1.3 1-1.3 2M12 17h0"/></svg></a><a href="#profile" aria-label="Profile" title="Profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4-6.5 8-6.5s7 2 8 6.5"/></svg></a></span><div class="lang" role="group" aria-label="Language"><button data-lang="en" aria-pressed="true">EN</button><button data-lang="es" aria-pressed="false">ES</button></div>
+  </header>
+  <main class="page" id="page"></main>
+</div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<div id="layer"></div>
+
+<script>
+(function(){
+ var KEY='jobdesk-local-v1',data=null,subs={};
+ try{data=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+ if(!data)data={"extras": {}, "profile": {"main": {"name": "", "base": "", "priorityLabel": "", "priorityKeywords": "", "regions": "", "industries": "", "industryList": [], "workModes": [], "levelMin": 0, "levelMax": 2, "level": "Entry to Mid", "currency": "CAD", "targets": "", "avoid": "", "truth": "", "background": ""}}, "profiles": {}, "agents": {"scout": {"key": "scout", "order": 1, "name": "Scout", "role": "Finds roles", "tagline": "Looks wide inside your borders.", "mission": "Looks across every industry and region inside your profile and brings back anything worth a look, confirmed on the employer's own page.", "bio": "A hound. Casts a wide net across every industry and region inside your borders.", "backstory": "Raised on the mountain trails, Scout learned to follow faint scents others missed. Never trusts a lead until it is confirmed at the source.", "handsOff": "You decide: discard, or send to the Matcher.", "schedule": "", "lastRun": "", "tools": [{"name": "Job boards", "use": "Search them yourself and add what you find."}, {"name": "Employer pages", "use": "Confirm a role is live before you add it."}], "rules": ["Your profile sets the borders, not a list of companies", "Confirm every role on the employer's own page", "Max 2 roles per company"]}, "matcher": {"key": "matcher", "order": 2, "name": "Matcher", "role": "Scores fit and real chance", "tagline": "Ranks roles by fit and your real odds.", "mission": "Compares each posting with your profile and says where you fit and where you don't.", "bio": "Measures each role against your background without flattery.", "backstory": "A tailor by trade, now taking the measure of job postings. Tells you where a role fits, where it needs altering, and when it is simply the wrong cut.", "handsOff": "The Coach, with broad advice on CV and approach.", "schedule": "", "lastRun": "", "tools": [{"name": "Your profile", "use": "Background, level and constraints."}, {"name": "The posting", "use": "Real requirements and years required."}], "rules": ["Tiers: Strong, Stretch, Long shot", "State the gap and what would close it"]}, "coach": {"key": "coach", "order": 3, "name": "Coach", "role": "Prepares applications", "tagline": "Tailors your CV, note and approach.", "mission": "Turns the Matcher's advice into a CV angle, a cover note and an approach plan for one role.", "bio": "Turns broad advice into a tailored application, one role at a time.", "backstory": "A veteran career coach who has seen every kind of hiring process. Patient, practical and fond of the question 'what are they really asking for?'", "handsOff": "You, ready to apply.", "schedule": "", "lastRun": "", "tools": [{"name": "Your CV", "use": "The source for every tailored version."}, {"name": "The posting", "use": "Mirror its priorities and language."}], "rules": ["Use only what is true", "Never apply on your behalf"]}, "super": {"key": "super", "order": 4, "name": "Supervisor", "role": "Follow-up and oversight", "tagline": "Keeps the process healthy.", "mission": "Tracks applications, follows up, and suggests skills and where to focus.", "bio": "Keeps the whole process healthy, from the first find to the follow-up.", "backstory": "A spreadsheet enthusiast with a pocket full of pens. Checks everything twice, remembers every conversation and never lets a follow-up slip.", "handsOff": "Feeds what it learns back to the others.", "schedule": "", "lastRun": "", "tools": [{"name": "Board", "use": "Counts roles by stage and flags stuck ones."}, {"name": "Notebook", "use": "Records what you liked and discarded."}], "rules": ["Proposes changes, never applies them silently"], "report": "Welcome. Fill in your profile, upload your CV, then add roles you find on the Scout page."}}, "memory": {"m1": {"kind": "rule", "text": "Max 2 roles per company"}, "m2": {"kind": "rule", "text": "Preferences are borders for the search, not a list of companies"}, "m3": {"kind": "rule", "text": "Only use what is true about you"}}, "questions": {"q1": {"order": 1, "text": "How much more pay makes a move worth it?", "options": ["A bigger role at similar pay", "About 10% more", "About 20% more", "30% or more", "Pay matters less than the work"]}, "q2": {"order": 2, "text": "How many days a week in an office can you accept?", "options": ["None, fully remote", "1 to 2", "3", "4 to 5"]}, "q3": {"order": 3, "text": "When you discard a role, what is usually the reason?", "options": ["Wrong field", "Company", "Level too low", "Level too high", "Location or commute", "Pay", "Not interested in the work"], "multi": true}, "q4": {"order": 4, "text": "Where are you weakest on paper?", "options": ["Local work history", "Language or accent", "Professional network", "Years of experience", "Industry experience", "Technical skills", "Work status", "Other"], "multi": true}, "q5": {"order": 5, "text": "Do you have contacts who could refer you in your target industries?", "options": ["Several", "One or two", "None yet", "Not sure"]}, "q6": {"order": 6, "text": "How many hours a week can you give to applications?", "options": ["Under 2", "2 to 5", "5 to 10", "More than 10"]}, "q7": {"order": 7, "text": "How open are you to relocating for an exceptional role?", "options": ["Not at all", "Within my region", "Within my country", "Anywhere"]}, "q8": {"order": 8, "text": "How actively are you searching?", "options": ["Only exceptional roles", "Steady, a few good options a week", "Actively, as many as possible"]}, "q9": {"order": 9, "text": "What would make you say no to an otherwise great role?", "options": ["A long commute", "Pay below my range", "A company I do not like", "Too much travel", "Rigid hours"], "multi": true}}, "roles": {}, "news": {}, "training": {}};
+ function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}
+ function snap(c){var o=data[c]||{},docs=Object.keys(o).map(function(id){return{id:id,exists:true,data:function(){return o[id]}}});return{docs:docs,size:docs.length,empty:!docs.length}}
+ function notify(c){(subs[c]||[]).forEach(function(f){f(snap(c))})}
+ function merge(a,b){for(var k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object'&&!Array.isArray(a[k]))merge(a[k],b[k]);else a[k]=b[k]}return a}
+ var clone=function(x){return JSON.parse(JSON.stringify(x))};
+ var db={collection:function(c){return{onSnapshot:function(fn){(subs[c]=subs[c]||[]).push(fn);setTimeout(function(){fn(snap(c))},0);return function(){}},
+   add:function(d){var id='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);(data[c]=data[c]||{})[id]=clone(d);save();notify(c);return Promise.resolve({id:id})}}},
+  doc:function(p){var a=p.split('/'),c=a[0],id=a[1];return{
+   update:function(d){data[c]=data[c]||{};data[c][id]=merge(data[c][id]||{},clone(d));save();notify(c);return Promise.resolve()},
+   set:function(d){(data[c]=data[c]||{})[id]=clone(d);save();notify(c);return Promise.resolve()},
+   delete:function(){if(data[c])delete data[c][id];save();notify(c);return Promise.resolve()}}}};
+ window.claude={use:function(n){return Promise.resolve(n==='db'?db:n==='user'?{can:function(){return Promise.resolve(true)}}:null)}};
+ window.__jd={export:function(){var b=new Blob([JSON.stringify(data,null,1)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='job-desk-backup.json';document.body.appendChild(a);a.click();a.remove()},
+  import:function(f){var r=new FileReader();r.onload=function(){try{var d=JSON.parse(r.result);if(d&&d.profile){data=d;save();Object.keys(subs).forEach(notify)}}catch(e){}};r.readAsText(f)}};
+})();
+</script><script>
+const ICON={
+ overview:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ scout:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/>',
+ matcher:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+ coach:'<path d="M4 20l1-5L16 4l4 4L9 19z"/><path d="M14 6l4 4"/>',
+ super:'<path d="M3 12s3.5-6.5 9-6.5S21 12 21 12s-3.5 6.5-9 6.5S3 12 3 12z"/><circle cx="12" cy="12" r="2.8"/>',
+ team:'<circle cx="9" cy="9" r="3.5"/><circle cx="17" cy="10" r="2.6"/><path d="M3 20c.8-4 3-5.8 6-5.8s5.2 1.8 6 5.8M15 15c3 0 5 1.4 6 5"/>',
+ profile:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4-6.5 8-6.5s7 2 8 6.5"/>'};
+const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
+const PAGES=[['overview','Base Camp'],['scout','Scout'],['matcher','Matcher'],['coach','Coach'],['super','Supervisor'],['team','How it works'],['profile','Profile']];
+const STAGES=[{id:'found',label:'Found',own:'scout'},{id:'matched',label:'With Matcher',own:'matcher'},{id:'preparing',label:'Preparing',own:'coach'},{id:'applied',label:'Applied',own:'super'},{id:'followup',label:'Follow-up',own:'super'}];
+const OWNS={scout:['found'],matcher:['matched'],coach:['preparing'],super:['applied','followup']};
+const S={roles:{},agents:{},memory:{},questions:{},news:{},profile:{},training:{},profiles:{},extras:{}};
+let db=null,route='overview',openId=null,canWrite=true;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const P=()=>S.profile.main||{};
+const priRe=()=>{const k=(P().priorityKeywords||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));return k.length?new RegExp(k.join('|'),'i'):/$^/};
+const isPri=r=>priRe().test(r.location||'');
+const tier=r=>r.tier||(r.match==null?null:r.match>=70?'Strong':r.match>=55?'Stretch':'Long shot');
+const tcls=t=>t==='Strong'?'strong':t==='Stretch'?'stretch':'long';
+const stageOf=r=>r.stage||'found';
+const live=r=>!['passed','closed','expired'].includes(stageOf(r));
+const roles=()=>Object.entries(S.roles).map(([id,r])=>({id,...r}));
+const byRank=(a,b)=>(isPri(b)-isPri(a))||((b.chance??b.match??0)-(a.chance??a.match??0));
+function ago(d){if(!d)return'';const n=Math.round((Date.now()-new Date(d+'T12:00:00'))/864e5);return n<=0?'today':n===1?'yesterday':n+' days ago'}
+const agent=k=>S.agents[k]||{};
+const answered=q=>Array.isArray(q.answer)?q.answer.length>0:!!q.answer;
+
+
+const ACT={found:[['matched','Send to Matcher',1]],matched:[['preparing','Send to Coach',1]],preparing:[['applied','Mark applied',1]],applied:[['followup','Move to follow-up',0]],followup:[]};
+const safeUrl=u=>/^https?:\/\//i.test(u||'')?u:'';
+function acts(r){const st=stageOf(r);return `<span class="acts">${safeUrl(r.url)?`<a class="btn sm alt" href="${esc(safeUrl(r.url))}" target="_blank" rel="noopener noreferrer">View posting</a>`:''}${(ACT[st]||[]).map(([to,l,pri])=>`<button class="btn sm ${pri?'':'alt'}" data-move="${to}" data-rid="${r.id}">${l}</button>`).join('')}${['found','matched','preparing','applied','followup'].includes(st)?`<button class="btn sm bad" data-pass="1" data-rid="${r.id}">Discard</button>`:''}</span>`}
+function pills(r){const t=tier(r);return `<span class="row">${isPri(r)?`<span class="pill pri">${esc(P().priorityLabel||'Priority')}</span>`:''}${t?`<span class="pill ${tcls(t)}">${t}</span>`:''}<span class="pill">${r.chance!=null?'chance '+r.chance+'%':r.match!=null?'fit '+r.match+'%':'unscored'}</span>${expPill(r)}</span>`}
+function roleRow(r){
+  return `<div class="item"><button class="main" data-id="${r.id}"><span class="t">${esc(r.title)}</span><br><span class="muted small">${esc(r.company)} · ${esc(r.location)}</span><br>${pills(r)}</button>${acts(r)}</div>`}
+const roleList=(arr,empty)=>arr.length?`<div class="list">${arr.sort(byRank).map(roleRow).join('')}</div>`:`<p class="empty">${empty}</p>`;
+const bul=a=>(a&&a.length)?`<ul class="tight small">${a.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'<p class="small muted">Not assessed yet.</p>';
+function matchCard(r){
+  const fits=r.fits||(r.why?[r.why]:null),unf=r.unfits||(r.gap?[r.gap]:null);
+  return `<div class="mc"><div class="item" style="border:0;padding:0"><button class="main" data-id="${r.id}"><span class="t">${esc(r.title)}</span><br><span class="muted small">${esc(r.company)} · ${esc(r.location)}</span><br>${pills(r)}</button>${acts(r)}</div>
+   <div class="fu"><div><h3 class="good">Where you fit</h3>${bul(fits)}</div><div><h3 class="bad">Where you don't</h3>${bul(unf)}</div></div>
+   ${r.advice?`<div class="small"><b>Broad advice:</b> ${esc(r.advice)}</div>`:''}
+   ${r.chance==null?`<div class="row small muted">Waiting for a score. <button class="btn sm alt" data-score="${r.id}">Score now</button><button class="btn sm alt" data-scoreprompt="${r.id}">Copy scoring prompt</button></div>`:''}</div>`}
+
+function overview(){
+  const R=roles(),act=R.filter(live),emptyP=emptyProfile();
+  const cnt=id=>act.filter(r=>stageOf(r)===id).length;
+  const att=[];
+  const nf=cnt('found');if(nf)att.push(['scout',`${nf} new find${nf>1?'s':''} to send to the Matcher or discard`]);
+  const waiting=act.filter(r=>stageOf(r)==='matched'&&!r.feedback).length;
+  const uns=act.filter(r=>stageOf(r)==='matched'&&r.chance==null).length;
+  if(uns)att.push(['matcher',`${uns} role${uns>1?'s':''} with the Matcher not scored yet`]);
+  const fu=folder().filter(dueFu).length;if(fu)att.push(['super',`${fu} application${fu>1?'s':''} to follow up`]);
+  const ex=act.filter(r=>{const n=idleLeft(r);return n!=null&&n>0&&n<=7}).length;if(ex)att.push(['scout',`${ex} role${ex>1?'s':''} will expire this week without progress`]);
+  if(!emptyP&&!P().cv&&!P().cvText)att.push(['coach','Share your current CV so the Coach can tailor it']);
+  const news=Object.values(S.news).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const D={found:'The Scout brings options',matched:'Scored for fit and real chance',preparing:'The Coach tailors your application',applied:'You send it',followup:'The Supervisor chases and reviews'};
+  const pp=P(),empty=!pp.name&&!(pp.industryList||[]).length&&!pp.targets&&!pp.background&&!pp.cv;
+  const start=empty?`<section class="box start"><div><h2>Create your profile here, and start looking!</h2><p class="small muted" style="margin-top:4px">Tell the team what you want and what you know. It takes a couple of minutes, mostly taps.</p></div><a class="btn" href="#profile" style="text-decoration:none;display:inline-block">Create your profile</a></section>`:'';
+  return `<div>${start}<div class="eyebrow">${esc(P().base||'')}${P().priorityLabel?' · priority: '+esc(P().priorityLabel):''}</div><h1>Base Camp</h1>
+   <p class="muted" style="margin-top:6px;max-width:70ch">Base Camp is where the whole team and your whole search meet. Job Desk is a small team that finds, vets, prepares and tracks opportunities for ${esc(P().name||'you')}. Each option moves left to right. You make every call, and nothing is ever applied for you.</p></div>
+  <section><h2 style="margin-bottom:12px">Your team</h2><div class="team">${['scout','matcher','coach','super'].map(k=>{const a=agent(k);return `<a class="mate o-${k}" href="#${k}"><div class="mband">${mascot(k,'md')}</div><div class="mtxt"><h3>${esc(a.name||AG(k))}</h3><p class="small muted">${esc(a.tagline||a.role||'')}</p>${a.lastRun&&a.lastRun!=='Manual'&&!window.__jd?`<span class="small">${esc(a.lastRun)}</span>`:''}</div></a>`}).join('')}</div></section>
+  <div class="flow">${STAGES.map(s=>`<a href="#${s.own}"><em style="color:var(--${s.own})">${s.label}</em><b>${cnt(s.id)}</b><span>${D[s.id]}</span></a>`).join('')}</div>
+  ${qotd()}
+  <div class="cols">
+    <section class="box"><h2>Needs your attention</h2>${att.length?`<div class="list">${att.map(([k,t])=>`<a class="item" href="#${k}"><span class="t">${esc(t)}</span><span class="muted small">${esc(AG(k))} →</span></a>`).join('')}</div>`:'<p class="empty">Nothing needs you right now.</p>'}</section>
+    <section class="box news"><h2>Market notes</h2>${news.length?news.map(n=>`<div class="sec"><a href="${esc(n.url||'#')}" target="_blank" rel="noopener"><h3>${esc(n.title)}</h3></a><p class="small">${esc(n.body)}</p>${n.why?`<p class="small"><b>For you:</b> ${esc(n.why)}</p>`:''}<span class="src">${esc(n.source||'')}${n.date?' · '+esc(n.date):''}</span></div>`).join(''):'<p class="empty">Notes appear here when something affects your search.</p>'}</section>
+  </div>
+`;
+}
+
+function mascot(k,cls){return mascotA(k,cls)}
+function mascotA(k,cls){
+ const S='stroke="#27333B" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"';
+ const e=(x,y,ry=3,dx=0)=>`<g class="bl"><ellipse cx="${x+dx}" cy="${y}" rx="2.5" ry="${ry}" fill="#15191E"/></g>`;
+ const body=c=>`<path d="M18 122c0-25 18-38 42-38s42 13 42 38z" fill="${c}" ${S}/>`;
+ const HEAD='M36 52c0-20 10-32 24-32s24 12 24 32c0 8-3 14-7 18v6c0 10-8 16-17 16s-17-6-17-16v-6c-4-4-7-10-7-18z';
+ const MUZ='M48 62c0-6 5-9 12-9s12 3 12 9v14c0 8-5 13-12 13s-12-5-12-13z';
+ const tape=d=>`<path d="${d}" stroke="#27333B" stroke-width="9.6" fill="none"/><path d="${d}" stroke="#E8C547" stroke-width="7" fill="none"/><path d="${d}" stroke="#27333B" stroke-width="7" stroke-dasharray="1.4 5" opacity=".55" fill="none"/>`;
+ let b='';
+ if(k==='scout')b=`<g class="br">${body('#3F5666')}<path d="M32 92q26 16 52 0l-4 10-22 14-22-14z" fill="#C8663A" ${S}/>
+  <g class="lu"><g transform="rotate(5 52 82)">
+  <path d="M28 56c0-18 12-31 28-31 13 0 22 8 25 21l22 8c5 2 6 8 4 12 0 5-4 8-9 8l-18 1c-6 1-14 5-20 9-18 0-31-12-31-28z" fill="#B58A5C" ${S}/>
+  <path class="ear" d="M42 30c9-4 17 1 18 11 1 15-3 30-12 41-5 5-13 2-15-6-3-15-1-30 9-46z" fill="#6B4A30" ${S}/>
+  <path d="M70 52l31 5c4 1 5 6 4 10-1 4-4 7-8 7l-18 1c-6 0-10-6-9-23z" fill="#EBDABB" ${S}/>
+  <g class="sn"><ellipse cx="103" cy="58.5" rx="5.6" ry="5" fill="#1E1E24"/><ellipse cx="101.6" cy="56.8" rx="1.6" ry=".9" fill="#fff" opacity=".55"/></g>
+  <path d="M80 68.5q10 3 22-1" stroke="#27333B" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <circle cx="66" cy="43" r="7.6" fill="#fff" stroke="#27333B" stroke-width="1.6"/>
+  <g class="dart"><g class="bl"><circle cx="69.4" cy="44.4" r="3.6" fill="#15191E"/><circle cx="70.6" cy="43.2" r="1.1" fill="#fff"/></g></g>
+  <path d="M56 33q10-8 22-1" stroke="#27333B" stroke-width="2.3" stroke-linecap="round" fill="none"/></g></g></g>`;
+ else if(k==='coach')b=`<g class="br">${body('#365D63')}<path d="M45 88l15 24 15-24z" fill="#F4F0E6" ${S}/><path d="M45 88l-3 26 14-4zM75 88l3 26-14-4z" fill="#2B4A50" ${S}/><path d="M83 104l9-2 2 8-9 2z" fill="#D9A04A" ${S}/>
+  <g class="nd"><path d="M45 30c-2-13-12-19-23-14M75 30c2-13 12-19 23-14" stroke="#2E2E36" stroke-width="7" stroke-linecap="round" fill="none"/>
+  <path d="M35 50c-10-4-19-2-21 3 4 7 15 7 23 3z" fill="#A89782" ${S}/><path d="M85 50c10-4 19-2 21 3-4 7-15 7-23 3z" fill="#A89782" ${S}/>
+  <path d="M54 88l6 24 6-24z" fill="#D2C9B6" ${S}/>
+  <path d="${HEAD}" fill="#F4F0E6" ${S}/><path d="${MUZ}" fill="#DDD3BF"/>
+  <path d="M40 41q7-5 14-1M80 41q-7-5-14-1" stroke="#A89A84" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+  ${e(49,50,2.6,0.5)}${e(71,50,2.6,-0.5)}
+  <ellipse cx="49" cy="50" rx="8.5" ry="6.5" fill="#fff" fill-opacity=".35" ${S}/><ellipse cx="71" cy="50" rx="8.5" ry="6.5" fill="#fff" fill-opacity=".35" ${S}/><path d="M57.5 49.5h5" ${S}/>
+  <g class="sn"><ellipse cx="60" cy="67" rx="6" ry="4" fill="#3A3A42"/></g><path d="M60 71v4M54 79.5q6 1.4 12 0" stroke="#27333B" stroke-width="1.9" fill="none" stroke-linecap="round"/></g></g>
+  <rect x="82" y="92" width="23" height="27" rx="3" fill="#F4F0E6" ${S}/><path class="ink" d="M87 100h13" stroke="#8B7B66" stroke-width="1.6" stroke-linecap="round"/><path class="ink ink2" d="M87 106h13" stroke="#8B7B66" stroke-width="1.6" stroke-linecap="round"/><path class="ink ink3" d="M87 112h8" stroke="#8B7B66" stroke-width="1.6" stroke-linecap="round"/>
+  <g class="pen"><path d="M87 100l11-11" stroke="#27333B" stroke-width="3.8" stroke-linecap="round"/><path d="M89 98l8-8" stroke="#C8663A" stroke-width="2" stroke-linecap="round"/></g>`;
+ else if(k==='matcher')b=`<g class="br">${body('#5E52A0')}<path d="M44 122c0-16 7-26 16-26s16 10 16 26z" fill="#D9D3EE"/>
+  <g class="tp">${tape('M38 90q22 14 44 0')}${tape('M45 98l-5 24')}${tape('M75 98l5 24')}</g>
+  <g class="cmpH"><path d="M32 36l-5-20 19 11zM88 36l5-20-19 11z" fill="#6B5FB0" ${S}/><path d="M86 22l9-12" stroke="#27333B" stroke-width="5" stroke-linecap="round"/><path d="M86 22l9-12" stroke="#E8C547" stroke-width="2.6" stroke-linecap="round"/>
+  <ellipse cx="60" cy="50" rx="31" ry="28" fill="#6B5FB0" ${S}/>
+  <circle cx="46" cy="49" r="11.5" fill="#fff" ${S}/><circle cx="74" cy="49" r="11.5" fill="#fff" ${S}/>
+  <g class="cmp"><g class="bl"><circle cx="47" cy="51" r="3.8" fill="#15191E"/><circle cx="75" cy="51" r="3.8" fill="#15191E"/></g></g>
+  <path d="M34.9 44q0-8 11.1-8t11.1 8q-11.1-3-22.2 0zM62.9 44q0-8 11.1-8t11.1 8q-11.1-3-22.2 0z" fill="#6B5FB0" ${S}/>
+  <path d="M35 34q8-6 17-2" stroke="#27333B" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M68 32h17" stroke="#27333B" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M55 61l5 9 5-9z" fill="#D9A04A" ${S}/></g></g>`;
+ else b=`<g class="br"><path d="M14 122c0-34 20-54 46-54s46 20 46 54z" fill="#2B7A58" ${S}/><path d="M60 72v50M32 84l10 18M88 84L78 102M24 110h72" stroke="#1F6044" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <path d="M51 88l8 5-8 5zM69 88l-8 5 8 5z" fill="#B0432F" ${S}/><circle cx="60" cy="93" r="2.8" fill="#8A2F20"/>
+  <rect x="26" y="96" width="16" height="18" rx="2" fill="#fff" ${S}/><path d="M30 96v-7M34 96v-9M38 96v-6" stroke="#B0432F" stroke-width="2.4" stroke-linecap="round"/><path d="M34 96v-9" stroke="#2F6FB0" stroke-width="2.4" stroke-linecap="round"/>
+  <g class="nd"><ellipse cx="60" cy="50" rx="31" ry="28" fill="#86C4A2" ${S}/>
+  <g class="gl"><circle cx="46" cy="48" r="14" fill="#fff" fill-opacity=".4" stroke="#27333B" stroke-width="2.6"/><circle cx="74" cy="48" r="14" fill="#fff" fill-opacity=".4" stroke="#27333B" stroke-width="2.6"/><path d="M60 47h0" stroke="#27333B" stroke-width="2.6"/>
+  <g class="bl"><circle cx="47" cy="49" r="3.4" fill="#15191E"/><circle cx="75" cy="49" r="3.4" fill="#15191E"/></g></g>
+  <path d="M53 66q7 1.6 14 0" stroke="#27333B" stroke-width="1.9" fill="none" stroke-linecap="round"/><g class="pw"><ellipse cx="60" cy="52" rx="7" ry="6" fill="#7AB997" ${S}/></g></g></g>
+  <rect x="78" y="82" width="26" height="34" rx="5" fill="#fff" ${S}/><rect x="86" y="78" width="10" height="7" rx="2.5" fill="#D9A04A" ${S}/><path class="tick" d="M83 94l4 4 8-8" stroke="#2B7A58" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M83 106h14" stroke="#2B7A58" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+ return `<span class="disc ${cls} d-${k}"><svg class="ch" viewBox="0 0 120 120" aria-hidden="true">${b}</svg></span>`;
+}
+function AG(k){return ({scout:'Scout',matcher:'Matcher',coach:'Coach',super:'Supervisor'})[k]}
+
+function agentPage(k){
+  const a=agent(k),R=roles().filter(r=>OWNS[k].includes(stageOf(r))&&live(r));
+  let main='';
+  if(k==='scout'){
+    const src=Object.values(S.memory).filter(m=>m.kind==='source').map(m=>`<li>${esc(m.text)}</li>`).join('');
+    main=`<section class="box"><div class="rsrow"><h2>Found</h2><button class="btn sm" data-runsearch="1" id="rs-btn">${(a.triggerId&&!window.__jd)?'Run search now':'Copy search prompt'}</button></div><p class="small muted">Send the ones worth a closer look to the Matcher. Discard the rest.</p>${a.lastNote?`<p class="small"><b>Last search</b>${a.lastRun?' ('+esc(a.lastRun)+')':''}: ${esc(a.lastNote)}</p>`:''}<span class="saved" id="rs-msg" role="status"></span><textarea id="rs-prompt" class="rsp" rows="8" hidden readonly style="width:100%;margin:6px 0"></textarea>${roleList(R,'No new finds waiting.')}</section>
+     <section class="box"><details><summary>Add a role yourself</summary><div class="fgrid" style="margin-top:10px"><label class="f" for="ar-t">Job title<input type="text" id="ar-t"></label><label class="f" for="ar-c">Company<input type="text" id="ar-c"></label><label class="f" for="ar-l">Location and work mode<input type="text" id="ar-l"></label><label class="f" for="ar-u">Link to the posting<input type="text" id="ar-u"></label></div><div class="row" style="margin-top:10px"><button class="btn" data-addrole="1">Add to Found</button><span class="saved" id="arsv"></span></div></details></section>
+     ${src?`<section class="box"><h2>Sources</h2><ul class="tight">${src}</ul></section>`:''}`;
+  }else if(k==='matcher'){
+    const un=R.filter(r=>r.chance==null).length;
+    main=`${idealCard()}
+     <section class="box"><h2>With the Matcher</h2>${R.length?R.sort(byRank).map(matchCard).join(''):'<p class="empty">Nothing here yet. Send finds from the Scout and I score each one on my own.</p>'}</section>
+     ${compareCard()}
+     ${((a.patternFits||[]).length||(a.patternUnfits||[]).length)?`<section class="box"><h2>What fits you, what doesn't</h2><div class="fu"><div><h3 class="good">Fits</h3>${bul(a.patternFits)}</div><div><h3 class="bad">Doesn't fit</h3>${bul(a.patternUnfits)}</div></div></section>`:''}
+     <section class="box"><h2>How scoring works</h2><p class="small"><b>Fit</b> compares the posting's real requirements with your background and with your 100% match. <b>Chance</b> adjusts fit for work status, language, local experience, employer culture and referral access. The Matcher also gives broad advice on how to approach the CV and the application, then hands the role to the Coach for the detailed work.</p></section>`;
+  }else if(k==='coach'){
+    main=`${cvTipsCard()}
+     <section class="box"><h2>In preparation</h2>${R.length?R.sort(byRank).map(coachCard).join(''):'<p class="empty">Send a role from the Matcher and the Coach starts on it.</p>'}</section>
+     <section class="box"><h2>How the Coach works</h2><ol class="tight"><li>Reads the Matcher's broad advice for the role.</li><li>Tells you what to change in your CV for that posting, using only what is true.</li><li>You tick the changes you approve and the Coach writes your CV for the role.</li><li>Drafts a cover note and plans the approach: who to contact, referral angle, timing.</li></ol></section>`;
+  }else{
+    const open=Object.entries(S.questions).sort((a,b)=>(a[1].order||0)-(b[1].order||0));
+    const L=kind=>Object.values(S.memory).filter(m=>m.kind===kind).map(m=>`<li>${esc(m.text)}</li>`).join('')||'<li class="muted">Nothing yet.</li>';
+    const tr=Object.entries(S.training).sort((x,y)=>(y[1].ts||0)-(x[1].ts||0));
+    main=`${appsSection()}
+     <section class="box"><div class="rsrow"><h2>Review of your search</h2><button class="btn sm ${a.report?'alt':''}" data-superrev="1" ${canWrite?'':'disabled'}>${a.report?'Review again':'Review my search'}</button></div><p class="small muted">${a.report?'':'I look at your profile, your roles and what happened with them, and tell you where to focus.'}</p><span class="saved" id="srsv" role="status"></span></section>
+     ${a.report?`<section class="box"><h2>Latest report</h2><p>${esc(a.report)}</p>${(a.changes||[]).length?`<h3>Proposed changes to the team</h3><ul class="tight">${a.changes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</section>`:''}
+          <section class="box"><h2>Train the team</h2><p class="small muted">Ask a question, give an instruction or correct a habit for any part of the process. The Supervisor answers and updates the helper.</p>
+      <label class="f" for="tr-to">About<select id="tr-to"><option value="all">The whole process</option><option value="scout">Scout (finding)</option><option value="matcher">Matcher (fit and chance)</option><option value="coach">Coach (applications)</option><option value="super">Supervisor (follow-up)</option></select></label>
+      <textarea id="tr-text" rows="3" aria-label="Your question or instruction" placeholder="e.g. Why did the Scout skip this kind of role? / Look at smaller companies too." ${canWrite?'':'disabled'}></textarea>
+      <div class="chips">${['Why was this role ranked above that one?','Look at smaller or newer companies too','What should I improve in my CV?','What am I missing for roles like these?'].map(x=>`<button class="chipb" data-sug="${esc(x)}">${esc(x)}</button>`).join('')}</div>
+      <div class="row"><button class="btn" data-train="1">Send</button><span class="saved" id="trsv"></span></div>
+      ${tr.map(([id,t])=>`<div class="tr"><span class="small muted">To ${esc(({all:'whole process',scout:'Scout',matcher:'Matcher',coach:'Coach',super:'Supervisor'})[t.to]||t.to)} · ${esc(t.date||'')}</span><span>${esc(t.text)}</span><span class="small ${t.reply?'':'muted'}">${t.reply?'<b>Reply:</b> '+esc(t.reply):'Waiting for a reply'}</span></div>`).join('')}</section>
+     <section class="box"><h2>Questions for you</h2><p class="small muted">Tap to answer. These tune every helper and apply to anyone's profile.</p>${open.map(([id,q])=>{const sel=Array.isArray(q.answer)?q.answer:(q.answer?[q.answer]:[]);return `<div class="q"><p><b>${esc(q.text)}</b>${q.multi?' <span class="small muted">(pick any)</span>':''}</p><div class="opts">${(q.options||[]).map((o,i)=>`<button class="opt" data-qa="${id}" data-oi="${i}" aria-pressed="${sel.includes(o)}" ${canWrite?'':'disabled'}>${esc(o)}</button>`).join('')}</div>${sel.includes('Other')?`<input type="text" data-qother="${id}" value="${esc(q.other||'')}" placeholder="Other, in a few words" aria-label="Other">`:''}</div>`}).join('')||'<p class="empty">No open questions.</p>'}</section>
+     <section class="box"><h2>What the team has learned</h2><details><summary>Show the notebook</summary><div class="sec" style="margin-top:10px"><b>Liked</b><ul class="tight">${L('like')}</ul><b>Discarded</b><ul class="tight">${L('pass')}</ul><b>Rules</b><ul class="tight">${L('rule')}</ul></div></details></section>`;
+  }
+  const growth=(k==='super'&&(a.growth||[]).length)?`<section class="box"><h2>Skills and focus</h2><p class="small muted">Where to build skills and where to spend your effort, based on the gaps the Matcher keeps finding.</p>${a.growth.map(g=>`<div class="q"><span class="tag">${esc(g.kind==='focus'?'Focus':'Skill')}</span><p><b>${esc(g.title)}</b></p><span class="small muted">${esc(g.why)}</span></div>`).join('')}</section>`:'';
+  const side=`${growth}<section class="box"><h2>Tools</h2><div>${(a.tools||[]).map(t=>`<div class="tool"><b>${esc(t.name)}</b><span class="muted">${esc(t.use)}</span></div>`).join('')||'<p class="empty">Not listed.</p>'}</div></section>
+   <section class="box"><details><summary>How ${esc(a.name||AG(k))} decides</summary><ul class="tight" style="margin-top:10px">${(a.rules||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></details></section>`;
+  return `<div class="head own o-${k}">${mascot(k,'xl').replace('<span ','<span role="button" tabindex="0" title="Click to talk" aria-label="Talk to the '+AG(k)+'" ')}<div class="htxt"><h1>${esc(a.name||AG(k))}</h1><p class="muted">${esc(a.role||'')}</p><p class="mission">${esc(a.mission||'')}</p></div><div class="hpanel"><div class="hstats">${heroStats(k).map(([n,l])=>`<div><b>${esc(String(n))}</b><span>${esc(l)}</span></div>`).join('')}</div><div class="stage" aria-live="polite"><span class="hint">Click ${esc(AG(k))} to see what they are up to.</span></div></div></div>
+   <div class="two"><div style="display:flex;flex-direction:column;gap:20px;min-width:0">${main}</div><div style="display:flex;flex-direction:column;gap:20px;min-width:0">${side}</div></div>`;
+}
+const GLOSS=[['Borders','The limits in your profile: where, level, pay and what to avoid. The Scout searches freely inside them.'],['Priority area','A place you would love to work. The Scout searches it first, every time.'],['Fit','How well the posting\'s real requirements match your background, from 0 to 100.'],['Real chance','Fit adjusted for things that decide hiring: work status, language, local experience, culture, referrals and years asked. Honest odds, not hope.'],['Strong, Stretch, Long shot','Strong: a real chance of 70 or more. Stretch: 55 to 69, worth a try. Long shot: under 55, rarely worth the effort without a referral.'],['Your 100% match','An example of the perfect role. You correct it, and the Matcher scores every role against it.'],['Track','Priority is your priority area. Home is the rest of your country. Abroad is anywhere else.'],['Open and Listed','Open: the posting page was confirmed live. Listed: it is on the employer\'s list but the page would not load.'],['Expired','A role with no progress for 3 weeks leaves your board by itself, so the list stays alive.'],['Outcome','What happened after you applied: waiting, they replied, interview, offer, rejected or no reply.']];
+function teamPage(){
+  const you=()=>`<span class="disc sm you"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICON.profile}</svg></span>`;
+  const N=[['you','You','Set your profile'],['scout','Scout','Finds roles'],['you','You','Send or discard'],['matcher','Matcher','Scores and advises'],['coach','Coach','Tailors your application'],['you','You','Apply']];
+  const W=[['scout','The Scout searches the web and adds roles when you press Run search now, and can also run on its own a few times a week.'],['matcher','The moment you send a role, the Matcher scores it. No button to press.'],['coach','Tells you what to change in your CV. You approve, and it writes your CV for that role.'],['super','Keeps the folder of roles you applied to. You tell it what they answered, and it follows up.']];
+  return `<div><h1>How it works</h1><p class="muted" style="margin-top:6px;max-width:70ch">Four specialists hand your search from one to the next. You make every decision.</p></div>
+  <section class="box"><h2>The process</h2><div class="proc">${N.map(([k,n,d],i)=>`<div class="node o-${k==='you'?'you':k}">${k==='you'?you():mascot(k,'sm')}<b>${n}</b><span class="d">${d}</span></div>`).join('')}</div>
+   <div class="over">${mascot('super','sm')}<div><b>Supervisor, the whole way through</b><span class="small muted" style="display:block">Watches every step, follows up after you apply, learns from what happens, and suggests skills and where to focus.</span></div></div></section>
+  <section class="box"><h2>Meet the team</h2>${['scout','matcher','coach','super'].map((k,i)=>{const a=agent(k);return `<div class="who o-${k}"><div class="wband">${mascot(k,'lg')}</div><div class="sec" style="gap:6px"><h2>${esc(a.name||AG(k))} <span class="muted" style="font-weight:500">· ${esc(a.role||'')}</span></h2><p>${esc(a.bio||a.mission||'')}</p><p class="small"><b>What it does for you:</b> ${W[i][1]}</p>${a.backstory?`<p class="small muted"><i>${esc(a.backstory)}</i></p>`:''}${a.handsOff?`<p class="small"><b>Hands off to:</b> ${esc(a.handsOff)}</p>`:''}<p class="small"><a href="#${k}">Visit ${esc(a.name||AG(k))}</a></p></div></div>`}).join('')}</section>
+  <section class="box"><h2>Words we use</h2><dl class="gloss">${GLOSS.map(([t,d])=>`<div><dt>${t}</dt><dd>${d}</dd></div>`).join('')}</dl></section>
+  ${typeof LOCAL_COPY!=='undefined'?`<section class="box"><h2>Share it</h2><div class="steps" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div class="step"><h3>Show it</h3><p class="small muted">Share the link as view-only. People can look but cannot change anything. They would see your profile and roles.</p></div><div class="step"><h3>Try it locally</h3><p class="small muted">Save a clean copy with an empty profile. It opens in any browser, keeps its data on that computer, and is edited by hand there. Searching and automatic scoring need Claude, so in a local copy you add roles yourself.</p><div><button class="btn" data-localcopy="1">Save a local copy</button> <span class="saved" id="lcsv"></span></div></div><div class="step"><h3>Run it fully</h3><p class="small muted">Ask Claude for a separate copy of Job Desk with its own profile, its own Scout and its own Matcher.</p></div></div></section>`:''}
+  <section class="box"><h2>Ground rules</h2><div class="steps">${[['scout','You set the borders','Your profile says where, what level and what to avoid. These are limits, not a shopping list.'],['matcher','We look wide','The Scout searches by industry and role type, not a fixed list of employers.'],['coach','Honest by default','We only use what is true about you and say plainly where you do not fit.'],['super','We learn from you','Every like, discard, answer and application result improves the next search.']].map(([k,t,d])=>`<div class="step o-${k}"><h3>${t}</h3><p class="small muted">${d}</p></div>`).join('')}</div></section>`;
+}
+const FIELDS=[['name','Your name'],['base','Where you live or want to work'],['priorityLabel','Priority area (short label)'],['priorityKeywords','Priority area keywords, comma separated'],['regions','Search order of regions'],['industries','Industries you want (or "any")'],['targets','Roles you want'],['level','Level'],['avoid','Always skip'],['truth','Never claim (keeps applications honest)'],['background','Short background the Matcher and Coach should use']];
+const LV=['Entry','Associate','Mid','Senior','Lead'],LY=['0-2 yrs','2-4 yrs','4-7 yrs','7-10 yrs','10+ yrs'];
+const IND=['Outdoor and sport','Consumer goods','Retail and e-commerce','Travel and tourism','Food and beverage','Tech and software','Finance and fintech','Health and wellness','Energy and mining','Sustainability and climate','Education','Public sector and nonprofit','Any industry'];
+const MODES=['Remote','Hybrid','On-site'];
+const SK=['Cooking','Sports','Outdoors','Excel','Power BI','SQL','Writing','Design','Photography','Languages','Public speaking','Data analysis','AI tools','Project management','Sales','Customer service'];
+const IN=['Mountain sports','Food and cooking','Travel','Technology','Sustainability','Fashion','Music','Fitness','Art and design','Reading','Gaming','Entrepreneurship','Learning new things','Community'];
+const tagSet=(f,sugg,ph)=>{const cur=P()[f]||[];const all=sugg.concat(cur.filter(x=>!sugg.includes(x)));return chipSet(f,all)+(canWrite?`<div class="row" style="margin-top:10px;gap:8px"><input type="text" id="tg-${f}" data-tgin="${f}" placeholder="${ph}" aria-label="${ph}" style="max-width:260px"><button class="btn sm alt" data-tadd="${f}">Add</button></div>`:'')};
+const chipSet=(f,list)=>`<div class="opts">${list.map(o=>`<button class="opt" data-pc="${f}" data-pv="${esc(o)}" aria-pressed="${(P()[f]||[]).includes(o)}" ${canWrite?'':'disabled'}>${esc(o)}</button>`).join('')}</div>`;
+const PSTEPS=['Basics','Level and pay','Work and industries','You','CV and words','Finish'];
+const HELP={name:['Your name','e.g. Alex','What the team should call you.'],base:['Where you live or want to work','e.g. Vancouver, BC','A city or region. Add "remote" if you can work from anywhere.'],priorityLabel:['Priority area (short label)','e.g. Sea-to-Sky','A place you would love to work. The Scout searches it first. Leave it empty if you have none.'],priorityKeywords:['Words that identify that area','e.g. whistler, squamish','Words that appear in job locations there, separated by commas.'],regions:['Where else to look, in order','e.g. BC, Canada, remote','The Scout searches the first one first, then moves down the list.']};
+const pf=k=>{const [l,ph,h]=HELP[k];return `<label class="f" for="pf-${k}">${l}<input type="text" id="pf-${k}" data-p="${k}" value="${esc(P()[k]||'')}" placeholder="${ph}" ${canWrite?'':'disabled'}><span class="hint2">${h}</span></label>`};
+let pStep=0,pAll=false;try{pStep=Math.min(5,Math.max(0,+localStorage.getItem('jd-pstep')||0))}catch(e){}
+function completeness(){const p=P();const c=[p.name,p.base,(p.industryList||[]).length,(p.workModes||[]).length,(p.skills||[]).length,p.targets,p.background,p.cvText||p.cv];return Math.round(c.filter(Boolean).length/c.length*100)}
+function profile(){
+  const p=P(),mn=p.levelMin==null?0:p.levelMin,mx=p.levelMax==null?2:p.levelMax;
+  const TA=[['targets','Roles you want'],['avoid','Always skip'],['truth','Never claim (keeps applications honest)'],['background','Short background the helpers should use']];
+  const SEC={
+    saved:`  <section class="box"><h2>Saved profiles</h2><p class="small muted">Snapshots of your search settings, so a change never costs you the original. Switching changes what the Scout looks for. The board of roles stays the same. For a different person, use a separate copy.</p>
+   ${Object.entries(S.profiles).sort((a,b)=>(b[1].savedAt||'').localeCompare(a[1].savedAt||'')).map(([id,sp])=>`<div class="sp"><span><b>${esc(sp.label)}</b> ${p.activeProfile===id?'<span class="pill pri">in use</span>':''}<br><span class="small muted">saved ${esc(sp.savedAt||'')}</span></span><span class="acts">${p.activeProfile===id?`<button class="btn sm alt" data-sp="update" data-spid="${id}">Overwrite with current</button>`:`<button class="btn sm" data-sp="use" data-spid="${id}">Use</button>`}<button class="btn sm bad" data-sp="del" data-spid="${id}">Delete</button></span></div>`).join('')||'<p class="empty">No saved profiles yet.</p>'}
+   <div class="row" style="margin-top:6px"><input type="text" id="sp-name" placeholder="Name this profile, e.g. Remote only" aria-label="Profile name" style="max-width:320px" ${canWrite?'':'disabled'}><button class="btn" data-sp="new">Save current as new</button><span class="saved" id="spsv"></span></div></section>`,
+    basics:`<section class="box"><h2>The basics</h2><div class="fgrid">${['name','base','priorityLabel','priorityKeywords','regions'].map(pf).join('')}</div></section>`,
+    level:`  <section class="box"><h2>Level</h2><p class="small muted">Drag both handles to the range you want to be considered for. Years are a rough guide.</p>
+   <div class="range-lab"><span>From: <span id="lv-a">${LV[mn]}</span></span><span>To: <span id="lv-b">${LV[mx]}</span></span></div>
+   <div class="dual"><div class="tr0"></div><div class="fill" id="lv-fill" style="left:calc(11px + (100% - 22px) * ${mn/4});right:calc(11px + (100% - 22px) * ${1-mx/4})"></div>
+    <input type="range" id="lv-min" min="0" max="4" step="1" value="${mn}" data-lv="1" aria-label="Lowest level" ${canWrite?'':'disabled'}>
+    <input type="range" id="lv-max" min="0" max="4" step="1" value="${mx}" data-lv="1" aria-label="Highest level" ${canWrite?'':'disabled'}></div>
+   <div class="lvticks">${LV.map((x,i)=>`<span id="lvt-${i}" class="${i>=mn&&i<=mx?'on':''}" style="left:calc(11px + (100% - 22px) * ${i/4})">${x}<small>${LY[i]}</small></span>`).join('')}</div></section>`,
+    sal:`  <section class="box"><h2>Salary range</h2><p class="small muted">Per year. Roles clearly below the range are flagged or skipped.</p>
+   <div class="sal"><label class="f" for="sal-min">Minimum<input type="text" inputmode="numeric" id="sal-min" data-sal="salaryMin" value="${esc(p.salaryMin||'')}" placeholder="e.g. 85000" ${canWrite?'':'disabled'}></label>
+   <label class="f" for="sal-max">Target<input type="text" inputmode="numeric" id="sal-max" data-sal="salaryMax" value="${esc(p.salaryMax||'')}" placeholder="e.g. 120000" ${canWrite?'':'disabled'}></label>
+   <label class="f" for="sal-cur">Currency<select id="sal-cur" data-sal="currency" ${canWrite?'':'disabled'}>${['CAD','USD','EUR','GBP','CLP','Other'].map(c=>`<option ${((p.currency||'CAD')===c)?'selected':''}>${c}</option>`).join('')}</select></label></div></section>`,
+    work:`  <section class="box"><h2>Work mode</h2>${chipSet('workModes',MODES)}</section>`,
+    ind:`  <section class="box"><h2>Industries</h2><p class="small muted">Pick any that interest you. "Any industry" lets the Scout explore freely.</p>${chipSet('industryList',IND)}</section>`,
+    know:`  <section class="box"><h2>What you know</h2><p class="small muted">Anything you are good at, work or not: cooking, sports, Excel, Power BI, Claude. The Matcher and Coach use it to find hidden strengths.</p>${tagSet('skills',SK,'Add your own')}</section>`,
+    int:`  <section class="box"><h2>What interests you</h2><p class="small muted">Topics you care about. The Scout uses these to spot roles you would not think to search for.</p>${tagSet('interests',IN,'Add your own')}</section>`,
+    li:`  <section class="box"><h2>Your LinkedIn</h2><p class="small muted">Optional. I cannot open LinkedIn for you, so the team reads what you give it here: your link, plus the text of your profile.</p>
+   <label class="f" for="pf-linkedin">Profile link<input type="text" id="pf-linkedin" data-p="linkedin" value="${esc(p.linkedin||'')}" placeholder="e.g. linkedin.com/in/your-name" ${canWrite?'':'disabled'}></label>
+   <div class="row" style="margin-top:10px"><label class="btn sm alt" for="li-file" style="cursor:pointer">Upload my LinkedIn PDF</label><input type="file" id="li-file" accept=".pdf,.doc,.docx,.txt" hidden ${canWrite?'':'disabled'}><span class="saved" id="lisv" role="status"></span></div>
+   <label class="f" for="pf-linkedinText" style="margin-top:12px">LinkedIn text (read from your file, or paste it)<textarea id="pf-linkedinText" rows="6" data-p="linkedinText" placeholder="Paste your About, Experience and Skills." ${canWrite?'':'disabled'}>${esc(p.linkedinText||'')}</textarea><span class="hint2">On LinkedIn, open your profile, choose More, then Save to PDF, and upload that file here. The team uses it with your CV.</span></label></section>`,
+    cv:`  <section class="box"><h2>Your CV</h2><p class="small muted">The Matcher and Coach use it. Upload a PDF or Word file.</p>
+   <div class="cvbox">${p.cv?`<span><b>${esc(p.cv.name)}</b><br><span class="small muted">added ${esc(p.cv.date||'')}</span></span>${p.cv.url?`<a href="${esc(p.cv.url)}" target="_blank" rel="noopener">Open</a>`:p.cv.dataUrl?`<a href="${esc(p.cv.dataUrl)}" download="${esc(p.cv.name)}">Download</a>`:''}<button class="btn sm bad" data-cv="remove">Remove</button>`:'<span class="muted">No CV added yet.</span>'}
+   <label class="btn sm alt" for="cv-file" style="cursor:pointer">${p.cv?'Replace':'Upload CV'}</label><input type="file" id="cv-file" accept=".pdf,.doc,.docx,.txt,.rtf" hidden ${canWrite?'':'disabled'}><span class="saved" id="cvsv"></span></div><label class="f" for="pf-cvText" style="margin-top:12px">CV text (read from your file, or paste it)<textarea id="pf-cvText" rows="8" data-p="cvText" placeholder="Paste the text of your CV." ${canWrite?'':'disabled'}>${esc(p.cvText||'')}</textarea><span class="hint2">The Coach edits this text to tailor your CV, and the Matcher reads it. Upload a PDF or Word file above and it fills in by itself.</span></label></section>`,
+    words:`  <section class="box"><h2>In your words</h2><div class="bk">${TA.map(([k,l])=>`<label class="f" for="pf-${k}">${l}<textarea id="pf-${k}" rows="2" data-p="${k}" ${canWrite?'':'disabled'}>${esc(p[k]||'')}</textarea></label>`).join('')}</div><span class="saved" id="pfsv"></span></section>`,
+    bk:`  ${window.__jd?`<section class="box"><h2>Backup</h2><p class="small muted">Your data lives in this browser. Save a backup file, or restore one.</p><div class="row"><button class="btn alt" data-backup="export">Save backup</button><button class="btn alt" data-backup="import">Restore backup</button><input type="file" id="bk-file" accept="application/json" hidden></div></section>`:''}`
+  };
+  const pct=completeness();
+  const finish=`<section class="box"><h2>You are ${pct}% done</h2><p class="small muted">${pct>=75?'The team has what it needs. Go and find your first roles.':'You can stop here and finish later. The more the team knows, the better the roles it finds.'}</p><div class="row"><a class="btn" href="#scout" style="text-decoration:none">Go to the Scout</a><a class="btn alt" href="#overview" style="text-decoration:none">Go to the Overview</a></div></section>`+SEC.saved+SEC.bk;
+  const steps=[SEC.basics,SEC.level+SEC.sal,SEC.work+SEC.ind,SEC.know+SEC.int,SEC.cv+SEC.li+SEC.words,finish];
+  const nav=`<div class="wiz"><div class="wbar" role="progressbar" aria-label="Profile complete" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div><div class="wsteps">${PSTEPS.map((x,i)=>`<button class="wst" data-pgo="${i}" aria-current="${i===pStep&&!pAll}">${i+1}. ${x}</button>`).join('')}</div></div>`;
+  const foot=`<div class="row wfoot">${pStep>0?'<button class="btn alt" data-pgo="prev">Back</button>':''}${pStep<5?'<button class="btn" data-pgo="next">Next</button>':''}</div>`;
+  return `<div><h1>Profile</h1><p class="muted" style="margin-top:6px;max-width:64ch">These are borders, not a shopping list: the Scout looks wide inside them. Answer what you can. You can skip anything and come back.</p></div>
+  ${pAll?'':nav}
+  ${pAll?steps.join(''):steps[pStep]}
+  ${pAll?'':foot}
+  <p class="small"><button class="linkb" data-pall="1">${pAll?'Back to the step by step view':'Show everything on one page'}</button></p>`;
+}
+/* ---- v2 features ---- */
+const today=()=>new Date().toISOString().slice(0,10);
+const dAgo=d=>d?Math.round((Date.now()-new Date(d+'T12:00:00'))/864e5):0;
+let TOAST=0;
+function flash(m,ms){const t=$('toast');if(!t)return;t.textContent=T(m);t.hidden=false;clearTimeout(TOAST);TOAST=setTimeout(()=>{t.hidden=true},ms||6500)}
+async function put(c,id,d){if(!db)return;try{await db.doc(c+'/'+id).update(d)}catch(e){try{await db.doc(c+'/'+id).set(d)}catch(e2){console.warn(e2)}}}
+async function moveRole(id,to,extra){const d=Object.assign({stage:to,movedAt:today()},extra||{});if(to==='applied'){d.appliedAt=today();d.outcome='waiting'}await upd('roles',id,d)}
+const EXPIRE_DAYS=21;
+const idleLeft=r=>['found','matched','preparing'].includes(stageOf(r))&&r.movedAt?EXPIRE_DAYS-dAgo(r.movedAt):null;
+const expPill=r=>{const n=idleLeft(r);return(n!=null&&n<=7&&n>0)?`<span class="pill long">${n===1?'expires tomorrow':'expires in '+n+' days'}</span>`:''};
+function sweep(){if(!db||!canWrite)return;const t=today();for(const [id,r] of Object.entries(S.roles)){const st=stageOf(r);if(!['found','matched','preparing'].includes(st))continue;
+  if(!r.movedAt){upd('roles',id,{movedAt:t});continue}
+  if(dAgo(r.movedAt)>=EXPIRE_DAYS)upd('roles',id,{stage:'expired',expiredAt:t,expiredFrom:st})}}
+
+/* texts for prompts */
+const L1=(k,v)=>v&&String(v).trim()?`${k}: ${String(v).trim()}\n`:'';
+function profText(){const p=P();return L1('Name',p.name)+L1('Base',p.base)+L1('Level',p.level)+L1('Pay range',(p.salaryMin||p.salaryMax)?`${p.salaryMin||'?'} to ${p.salaryMax||'?'} ${p.currency||''}`:'')+L1('Work modes',(p.workModes||[]).join(', '))+L1('Industries',p.industries)+L1('Roles wanted',p.targets)+L1('Skills',(p.skills||[]).join(', '))+L1('Interests',(p.interests||[]).join(', '))+L1('Always skip',p.avoid)+L1('Never claim',p.truth)+L1('Background',p.background)+(p.cvText?'CV (plain text):\n'+p.cvText+'\n':'')+L1('LinkedIn link',p.linkedin)+(p.linkedinText?'LinkedIn profile text:\n'+p.linkedinText+'\n':'')}
+function idealText(){const i=S.extras.ideal||{};return ['title','level','where','pay','industries','musts','nice','dealbreakers'].map(k=>i[k]?k+': '+String(i[k]).replace(/\n/g,'; ')+'\n':'').join('')}
+const roleText=r=>['title','company','location','pay','posted','deadline','url','why','gap','caveats','technical'].map(k=>r[k]?k+': '+r[k]+'\n':'').join('');
+function scorePrompt(r){return 'You are the Matcher, an honest job-fit scorer who works like a tailor. Score this role for the person. Use only what the profile says; never invent experience. Reply with JSON only: {"match":0-100,"chance":0-100,"fits":["..."],"unfits":["..."],"factors":[{"label":"...","note":"..."}],"advice":"2-3 sentences","caveats":"..."}. match = fit of the real requirements against the profile, measured against the ideal 100% role. chance = real chance of getting it, never above match+5, adjusted for work status, language, local experience, culture, referral access and years required. Be honest.\n\nPROFILE\n'+profText()+'\nIDEAL 100% ROLE\n'+idealText()+'\nROLE\n'+roleText(r)}
+const noAuto=()=>{flash('Automatic scoring is not available here. Open the Matcher and use Copy scoring prompt.');return false};
+async function scoreHere(id){const r=S.roles[id];if(!r)return false;
+  try{const smp=await claude.use('sample');if(!smp||!smp.json)return noAuto();
+   flash('The Matcher is scoring this role...');
+   const o=await smp.json(scorePrompt(r));const n=v=>Math.max(0,Math.min(100,Math.round(+v||0)));const m=n(o.match),ch=Math.min(n(o.chance),m+5);
+   await upd('roles',id,{match:m,chance:ch,tier:ch>=70?'Strong':ch>=55?'Stretch':'Long shot',fits:(o.fits||[]).slice(0,4).map(String),unfits:(o.unfits||[]).slice(0,4).map(String),advice:String(o.advice||''),caveats:String(o.caveats||r.caveats||''),factors:(o.factors||[]).slice(0,6).map(f=>({label:String(f.label||''),note:String(f.note||'')})),scoredAt:today()});
+   flash('Scored.');return true}catch(e){return noAuto()}}
+let MT=0;
+function fireMatcher(){clearTimeout(MT);MT=setTimeout(async()=>{const a=agent('matcher');
+  try{const mcp=await claude.use('mcp');if(mcp&&a.triggerId&&!window.__jd){await mcp.callTool('Claude Code Remote','fire_trigger',{trigger_id:a.triggerId});flash('The Matcher is scoring. It takes a few minutes and the scores appear here on their own.');return}}catch(e){}
+  for(const [id,r] of Object.entries(S.roles)){if(stageOf(r)==='matched'&&r.chance==null)await scoreHere(id)}},5000)}
+async function copyText(txt){try{await navigator.clipboard.writeText(txt);return true}catch(e){return false}}
+async function saveFile(name,text){
+  if(!window.__jd){try{const dl=await claude.use('downloads');if(dl){for(const n of [name,name.replace(/\.doc$/,'.html')]){try{await dl.save({filename:n,data:text});return true}catch(e){}}}}catch(e){}}
+  try{const b=new Blob([text],{type:'text/html'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();return true}catch(e){return false}}
+
+/* question of the day */
+function qotd(){
+  if(emptyProfile())return '';
+  const un=Object.entries(S.questions).filter(([id,q])=>!answered(q)).sort((a,b)=>(a[1].order||0)-(b[1].order||0));
+  let st=null;try{st=JSON.parse(localStorage.getItem('jd-qd')||'null')}catch(e){}
+  const t=today();
+  if(!st||st.day!==t||!S.questions[st.id]){
+    if(!un.length)return '';
+    const pick=un[Math.floor(Date.now()/864e5)%un.length][0];st={day:t,id:pick};try{localStorage.setItem('jd-qd',JSON.stringify(st))}catch(e){}}
+  const q=S.questions[st.id];if(!q)return '';
+  const sel=Array.isArray(q.answer)?q.answer:(q.answer?[q.answer]:[]);
+  return `<section class="box qd"><div class="rsrow"><h2>Question of the day</h2><span class="small muted">${sel.length?'Thanks. Another one tomorrow.':'One tap, and every helper learns about you.'}</span></div><p><b>${esc(q.text)}</b>${q.multi?' <span class="small muted">(pick any)</span>':''}</p><div class="opts">${(q.options||[]).map((o,i)=>`<button class="opt" data-qa="${st.id}" data-oi="${i}" aria-pressed="${sel.includes(o)}" ${canWrite?'':'disabled'}>${esc(o)}</button>`).join('')}</div></section>`}
+const emptyProfile=()=>{const p=P();return !p.name&&!(p.industryList||[]).length&&!p.targets&&!p.background&&!p.cv&&!p.cvText};
+
+/* Matcher: ideal role */
+const IDF=[['title','Role title','e.g. Product analyst',1],['level','Level','e.g. Mid',1],['where','Where and how','e.g. Hybrid, Vancouver',1],['pay','Pay','e.g. 90,000 to 110,000 CAD',1],['industries','Type of company','e.g. Outdoor and consumer brands',1],['musts','Must-haves','One per line',3],['nice','Nice to have','One per line',2],['dealbreakers','Deal-breakers','One per line',2]];
+const HID=(()=>{try{return new Set(JSON.parse(localStorage.getItem('jd-hide')||'[]'))}catch(e){return new Set()}})();
+const hideBtn=k=>`<button class="btn sm alt" data-hide="${k}">${HID.has(k)?'Show':'Hide'}</button>`;
+function toggleHide(k){HID.has(k)?HID.delete(k):HID.add(k);try{localStorage.setItem('jd-hide',JSON.stringify([...HID]))}catch(e){}render()}
+function idealCard(){const i=S.extras.ideal||{};const has=IDF.some(f=>i[f[0]]);
+  return `<section class="box"><div class="rsrow"><h2>Your 100% match</h2><span class="row" style="gap:8px">${has&&!HID.has('ideal')?`<button class="btn sm" data-runideal="1" ${canWrite?'':'disabled'}>Find roles like this</button>`:''}${HID.has('ideal')&&has?'':`<button class="btn sm ${has?'alt':''}" data-ideal="gen" ${canWrite?'':'disabled'}>${has?'Rewrite from my profile':'Write it from my profile'}</button>`}${has?hideBtn('ideal'):''}</span></div>
+  ${has&&HID.has('ideal')?`<p class="small muted">${esc(i.title||'')}${i.where?' · '+esc(i.where):''}. Hidden. Show it to correct it.</p></section>`:`<p class="small muted">${has?(i.edited?'Corrected by you. The Matcher scores every role against this.':'A first example the Matcher wrote. Correct anything that is off: it scores every role against it.'):'Describe the perfect role once and the Matcher scores every role against it. I can write a first version from your profile, and you correct it.'}</p>
+  ${has?`<div class="fgrid ideal">${IDF.map(([k,l,ph,rows])=>`<label class="f ${rows>1?'wide':''}" for="id-${k}">${l}${rows>1?`<textarea id="id-${k}" rows="${rows}" data-idealf="${k}" placeholder="${ph}" ${canWrite?'':'disabled'}>${esc(i[k]||'')}</textarea>`:`<input type="text" id="id-${k}" data-idealf="${k}" value="${esc(i[k]||'')}" placeholder="${ph}" ${canWrite?'':'disabled'}>`}</label>`).join('')}</div>`:''}<span class="saved" id="idsv" role="status"></span></section>`}`}
+async function superReview(){const say=x=>{const e=$('srsv');if(e)e.textContent=T(x)};say('Reviewing...');
+  let smp=null;try{smp=await claude.use('sample')}catch(e){}if(!smp||!smp.json){say('Not available here.');return}
+  const rs=Object.values(S.roles).slice(0,40).map(r=>[r.title,r.company,stageOf(r),r.tier||'',r.chance==null?'':r.chance,r.outcome||'',r.feedback||'',r.reason||'',(r.unfits||[]).slice(0,2).join('; ')].join(' | ')).join('\n')||'(no roles yet)';
+  const pr='You are the Supervisor of a job search team (Scout finds roles, Matcher scores them, Coach tailors applications). Review this person\u2019s search honestly and practically. Use only the data below. Reply with JSON only: {"report":"2 to 3 sentences on where the search stands and where to focus","changes":["3 short proposals to change how the team works for this person"],"growth":[{"kind":"skill","title":"a skill or credential worth building","why":"one sentence tied to the profile or the roles"},{"kind":"focus","title":"where to spend effort","why":"one sentence"}]} with 3 to 5 growth items.\n\nPROFILE\n'+profText()+'\nCV\n'+String(P().cvText||'').slice(0,4000)+'\nROLES (title | company | stage | tier | chance | outcome | feedback | reason | gaps)\n'+rs;
+  try{const o=await smp.json(pr);if(!o||!o.report)throw 0;
+   const ag=(RAW.agents&&RAW.agents.super)||{};const by={...(ag.byProfile||{}),[actKey()]:{report:String(o.report),changes:(o.changes||[]).slice(0,5).map(String),growth:(o.growth||[]).slice(0,6).map(g=>({kind:g.kind==='focus'?'focus':'skill',title:String(g.title||''),why:String(g.why||'')}))}};
+   await put('agents','super',{byProfile:by});say('Done.')}catch(e){say('Could not review right now. Try again.')}}
+async function genIdeal(){const say=x=>{const e=$('idsv');if(e)e.textContent=T(x)};say('Writing...');
+  let o=null;
+  try{const smp=await claude.use('sample');if(smp&&smp.json)o=await smp.json('Write one example of a job that would be a 100% match for this person: realistic and specific, based only on the profile. Reply with JSON only: {"title":"","level":"","where":"","pay":"","industries":"","musts":"3 to 5 lines separated by newlines","nice":"2 to 3 lines separated by newlines","dealbreakers":"2 to 3 lines separated by newlines"}.\n\nPROFILE\n'+profText())}catch(e){}
+  if(!o){const p=P();o={title:(p.targets||'').split(/\n|;|,/)[0].trim(),level:p.level||'',where:[(p.workModes||[]).join(' or '),p.base].filter(Boolean).join(', '),pay:(p.salaryMin||p.salaryMax)?`${p.salaryMin||''}${p.salaryMax?' to '+p.salaryMax:''} ${p.currency||''}`.trim():'',industries:p.industries||'',musts:(p.skills||[]).slice(0,4).join('\n'),nice:(p.interests||[]).slice(0,3).join('\n'),dealbreakers:p.avoid||''}}
+  const d={};IDF.forEach(([k])=>{d[k]=typeof o[k]==='string'?o[k]:Array.isArray(o[k])?o[k].join('\n'):''});d.edited=false;d.generatedAt=today();
+  await put('extras','ideal',d);say('Done. Correct anything that is off.')}
+
+/* Matcher: compare two roles */
+let CMP={a:'',b:'',v:''};
+function compareCard(){
+  const L=roles().filter(live).filter(r=>['matched','preparing','applied','followup'].includes(stageOf(r))||r.chance!=null).sort(byRank);
+  const opt=sel=>`<option value="">Choose a role</option>`+L.map(r=>`<option value="${r.id}" ${sel===r.id?'selected':''}>${esc(r.title)} · ${esc(r.company)}</option>`).join('');
+  const A=S.roles[CMP.a],B=S.roles[CMP.b];let out='';
+  if(L.length<2)out='<p class="empty">You need at least two roles with the Matcher to compare them.</p>';
+  else if(A&&B&&CMP.a!==CMP.b)out=cmpTable({id:CMP.a,...A},{id:CMP.b,...B});
+  return `<section class="box"><h2>Compare two roles</h2><p class="small muted">Pick two roles and the Matcher puts them side by side and says which to go for first.</p><div class="fgrid"><label class="f" for="cm-a">Role A<select id="cm-a" data-cmp="a">${opt(CMP.a)}</select></label><label class="f" for="cm-b">Role B<select id="cm-b" data-cmp="b">${opt(CMP.b)}</select></label></div>${out}</section>`}
+function cmpTable(a,b){
+  const f=(r,k)=>r[k]==null||r[k]===''?'—':esc(Array.isArray(r[k])?r[k].join(' · '):r[k]);
+  const num=(r,k)=>r[k]==null?'—':r[k]+'%';
+  const win=k=>a[k]!=null&&b[k]!=null&&a[k]!==b[k]?(a[k]>b[k]?'a':'b'):'';
+  const row=(l,fa,fb,w)=>`<tr><th scope="row">${l}</th><td class="${w==='a'?'win':''}">${fa}</td><td class="${w==='b'?'win':''}">${fb}</td></tr>`;
+  const rows=[row('Real chance',num(a,'chance'),num(b,'chance'),win('chance')),row('Fit',num(a,'match'),num(b,'match'),win('match')),row('Tier',esc(tier(a)||'—'),esc(tier(b)||'—'),''),row('Where',f(a,'location'),f(b,'location'),''),row('Pay',f(a,'pay'),f(b,'pay'),''),row('Where you fit',f(a,'fits'),f(b,'fits'),''),row("Where you don't",f(a,'unfits'),f(b,'unfits'),''),row('Deadline',f(a,'deadline'),f(b,'deadline'),'')].join('');
+  const sa=a.chance??a.match,sb=b.chance??b.match;
+  const quick=(sa==null||sb==null)?'<p class="small muted">Score both roles first to get a call.</p>':sa===sb?'<p class="small"><b>Quick call:</b> They score the same. Choose by pay, place or deadline.</p>':`<p class="small"><b>Quick call:</b> ${esc(sa>sb?a.title:b.title)}, ${esc(sa>sb?a.company:b.company)}, has the better real chance (${Math.max(sa,sb)}% against ${Math.min(sa,sb)}%).</p>`;
+  return `<div class="cmpw"><table class="cmp"><thead><tr><th></th><th>${esc(a.title)}<span class="small muted"><br>${esc(a.company)}</span></th><th>${esc(b.title)}<span class="small muted"><br>${esc(b.company)}</span></th></tr></thead><tbody>${rows}</tbody></table></div>${quick}<div class="row"><button class="btn sm" data-cmpask="1">Ask the Matcher which to go for first</button><span class="saved" id="cmpsv" role="status"></span></div>${CMP.v?`<p class="small cmpv">${esc(CMP.v)}</p>`:''}`}
+async function cmpAsk(){const a=S.roles[CMP.a],b=S.roles[CMP.b];const say=x=>{const e=$('cmpsv');if(e)e.textContent=T(x)};if(!a||!b)return;
+  const pr='You are the Matcher. Compare these two roles for this person and say which one to go for first, and why, in 3 to 4 plain sentences. Be honest about the real chance, fit, pay and risk. Use only the data given.\n\nPROFILE\n'+profText()+'\nIDEAL 100% ROLE\n'+idealText()+'\nROLE A\n'+roleText(a)+'fit: '+a.match+' chance: '+a.chance+'\nROLE B\n'+roleText(b)+'fit: '+b.match+' chance: '+b.chance+'\n';
+  try{const smp=await claude.use('sample');if(!smp){const ok=await copyText(pr);say(ok?'Prompt copied. Paste it into Claude.':'Not available here.');return}
+   say('Thinking...');const r=await smp(pr);CMP.v=(r&&r.text)||'';say('');render()}catch(e){say('Could not do it now. Try again.')}}
+
+/* Supervisor: applications folder */
+const OUT=[['waiting','Waiting'],['replied','They replied'],['interview','Interview'],['offer','Offer'],['rejected','Rejected'],['noreply','No reply']];
+const OUTL=Object.fromEntries(OUT);
+const folder=()=>roles().filter(r=>['applied','followup'].includes(stageOf(r))).sort((a,b)=>(b.appliedAt||'').localeCompare(a.appliedAt||''));
+const sinceApplied=r=>dAgo(r.appliedAt||r.movedAt||r.added);
+const dueFu=r=>(r.outcome||'waiting')==='waiting'&&sinceApplied(r)>=7;
+function fuNote(r){const n=r.appliedAt?r.appliedAt:'';return LANG==='es'?`Hola, postulé al cargo de ${r.title} en ${r.company}${n?' el '+n:''} y quería saber cómo va el proceso. Sigo muy interesado/a y con gusto envío lo que haga falta. Gracias por su tiempo.`:`Hi, I applied for the ${r.title} role at ${r.company}${n?' on '+n:''} and wanted to check in on the process. I am still very interested and happy to share anything that helps. Thank you for your time.`}
+function appCard(r){const o=r.outcome||'waiting';
+  return `<div class="app"><div class="rsrow"><button class="main" data-id="${r.id}"><span class="t">${esc(r.title)}</span><br><span class="muted small">${esc(r.company)}${r.appliedAt?' · applied '+esc(ago(r.appliedAt)):''}</span></button><span class="pill ${o==='offer'||o==='interview'?'strong':o==='rejected'||o==='noreply'?'long':''}">${OUTL[o]||o}</span></div>
+  ${dueFu(r)?`<p class="small fudue">No news for ${sinceApplied(r)} days. Time to follow up. <button class="btn sm alt" data-fucopy="${r.id}">Copy a follow-up note</button></p>`:''}
+  <div class="opts">${OUT.map(([k,l])=>`<button class="opt" data-out="${k}" data-rid="${r.id}" aria-pressed="${o===k}" ${canWrite?'':'disabled'}>${l}</button>`).join('')}</div>
+  <label class="f small" for="on-${r.id}">What happened?<textarea id="on-${r.id}" rows="2" data-outnote="${r.id}" placeholder="e.g. They asked for a call on Tuesday" ${canWrite?'':'disabled'}>${esc(r.outcomeNote||'')}</textarea></label>
+  ${(r.history||[]).length?`<ul class="tight small muted">${r.history.slice().reverse().map(h=>`<li>${esc(h.date)}: ${esc(OUTL[h.outcome]||h.outcome)}${h.note?' · '+esc(h.note):''}</li>`).join('')}</ul>`:''}</div>`}
+function appStats(){const F=folder(),n=F.length;
+  if(n<2)return '<p class="small muted">Log what happens after you apply. With a few results I can tell you what is working.</p>';
+  const ans=F.filter(r=>['replied','interview','offer','rejected'].includes(r.outcome)).length,iv=F.filter(r=>['interview','offer'].includes(r.outcome)).length,of=F.filter(r=>r.outcome==='offer').length;
+  const tiers=['Strong','Stretch','Long shot'].map(t=>{const g=F.filter(r=>tier(r)===t);return g.length?`<tr><td>${t}</td><td>${g.length}</td><td>${g.filter(r=>['replied','interview','offer'].includes(r.outcome)).length}</td></tr>`:''}).join('');
+  return `<div class="hstats4"><div><b>${n}</b><span>Applied</span></div><div><b>${Math.round(ans/n*100)}%</b><span>Got an answer</span></div><div><b>${iv}</b><span>Interviews</span></div><div><b>${of}</b><span>Offers</span></div></div>${tiers?`<table class="cmp mini"><thead><tr><th>Tier when you applied</th><th>Applied</th><th>Moved forward</th></tr></thead><tbody>${tiers}</tbody></table>`:''}`}
+function appsSection(){const F=folder();
+  return `<section class="box"><h2>Your applications</h2><p class="small muted">Every role you applied to lives here. Come back when they answer and tell me what happened: it feeds the follow-ups and the advice.</p>
+  ${F.length?F.map(appCard).join(''):'<p class="empty">No applications yet. Mark a role as applied and it shows up here.</p>'}
+  <details><summary>Add an application you made elsewhere</summary><div class="fgrid" style="margin-top:10px"><label class="f" for="ap-t">Job title<input type="text" id="ap-t"></label><label class="f" for="ap-c">Company<input type="text" id="ap-c"></label><label class="f" for="ap-u">Link to the posting<input type="text" id="ap-u"></label><label class="f" for="ap-d">Date applied (YYYY-MM-DD)<input type="text" id="ap-d" placeholder="${today()}"></label></div><div class="row" style="margin-top:10px"><button class="btn" data-addapp="1">Add to my applications</button><span class="saved" id="apsv"></span></div></details></section>
+  <section class="box"><h2>What your applications tell us</h2>${appStats()}</section>`}
+
+/* Coach: plan, tailored CV, general tips */
+function coachPrompt(kind,r){const base='You are the Coach, an experienced career coach. Use ONLY facts that appear in the CV and profile below. Never invent experience, numbers or employers.\n\nPROFILE\n'+profText()+'\nROLE\n'+roleText(r)+(r.advice?'matcher advice: '+r.advice+'\n':'');
+  if(kind==='suggest')return base+'\nTask: list 4 to 8 concrete changes to tailor the CV to this role (reorder, reword, add keywords the person truly has, cut). Reply with JSON only: {"changes":[{"text":"the change, one sentence","why":"why it helps for this posting, one sentence"}]}';
+  const ok=(r.plan&&r.plan.changes||[]).filter(c=>c.ok).map((c,i)=>(i+1)+'. '+c.text).join('\n');
+  return base+'\nTask: rewrite the CV applying ONLY these approved changes and keeping everything else as it is:\n'+ok+'\nReturn the complete CV as plain text, ready to paste into a document. No commentary.'}
+function cvTipsCard(){const t=S.extras.cvtips||{},its=t.items||[];
+  return `<section class="box"><div class="rsrow"><h2>Your CV, in general</h2><span class="row" style="gap:8px">${HID.has('cvtips')&&its.length?'':`<button class="btn sm ${its.length?'alt':''}" data-cact="tips" ${canWrite?'':'disabled'}>${its.length?'Review again':'Review my CV'}</button>`}${its.length?hideBtn('cvtips'):''}</span></div>${its.length&&HID.has('cvtips')?`<p class="small muted">${its.length} tips saved. Hidden. Show them to read again.</p>`:its.length?`<ul class="tight">${its.map(i=>`<li><b>${esc(i.title)}</b>${i.why?`<br><span class="small muted">${esc(i.why)}</span>`:''}</li>`).join('')}</ul>`:`<p class="small muted">${P().cvText?'General tips on your CV, whatever the role.':'Paste your CV text in your profile and I will give you general tips on it.'}</p>`}<span class="saved" id="tipsv" role="status"></span></section>`}
+function coachCard(r){const pl=r.plan||{},ch=pl.changes||[];
+  return `<div class="cc"><div class="item" style="border:0;padding:0"><button class="main" data-id="${r.id}"><span class="t">${esc(r.title)}</span><br><span class="muted small">${esc(r.company)} · ${esc(r.location)}</span><br>${pills(r)}</button>${acts(r)}</div>
+  ${r.advice?`<p class="small"><b>Matcher's advice:</b> ${esc(r.advice)}</p>`:''}
+  ${P().cvText?'':'<p class="small muted">To tailor your CV I need its text. <a href="#profile">Paste it in your profile</a>.</p>'}
+  <div class="row"><button class="btn sm" data-cact="suggest" data-rid="${r.id}" ${canWrite?'':'disabled'}>${ch.length?'Suggest again':'What should I change?'}</button><span class="saved" id="cc-${r.id}" role="status"></span></div>
+  ${ch.length?`<div class="chg"><b class="small">Suggested changes. Tick the ones you approve.</b>${ch.map((c,i)=>`<label class="chk"><input type="checkbox" data-chg="${i}" data-rid="${r.id}" ${c.ok?'checked':''} ${canWrite?'':'disabled'}><span><b>${esc(c.text)}</b><br><span class="small muted">${esc(c.why||'')}</span></span></label>`).join('')}<div class="row"><button class="btn sm" data-cact="write" data-rid="${r.id}" ${ch.some(c=>c.ok)?'':'disabled'}>Make my CV for this role</button></div></div>`:''}
+  ${pl.cv?`<div class="sec"><b class="small">Your CV for this role</b><textarea rows="12" data-plancv="${r.id}" aria-label="Tailored CV">${esc(pl.cv)}</textarea><div class="row"><button class="btn sm alt" data-cact="copycv" data-rid="${r.id}">Copy</button><button class="btn sm alt" data-cact="dl" data-rid="${r.id}">Download</button><span class="saved" id="cv-${r.id}" role="status"></span></div></div>`:''}</div>`}
+async function coachAct(kind,id){const r=S.roles[id];const say=(x,tgt)=>{const e=$((tgt||'cc-')+(id||''));if(e)e.textContent=T(x)};
+  try{
+   if(kind==='tips'){const say2=x=>{const e=$('tipsv');if(e)e.textContent=T(x)};if(!P().cvText){say2('Paste your CV text in your profile first.');return}
+     const pr='You are the Coach, an experienced career coach. Review this CV in general (not for one role). Give 5 to 7 specific, practical tips, most important first. Use only what is in the CV. Reply with JSON only: {"items":[{"title":"the tip, one sentence","why":"why it matters, one sentence"}]}\n\nPROFILE\n'+profText();
+     const smp=await claude.use('sample');if(!smp||!smp.json){say2(await copyText(pr)?'Prompt copied. Paste it into Claude.':'Not available here.');return}
+     say2('Reading your CV...');const o=await smp.json(pr);await put('extras','cvtips',{items:(o.items||[]).slice(0,8).map(i=>({title:String(i.title||''),why:String(i.why||'')})),at:today()});say2('Done.');return}
+   if(!r)return;
+   if(kind==='suggest'){if(!P().cvText){say('Paste your CV text in your profile first.');return}
+     const pr=coachPrompt('suggest',r);const smp=await claude.use('sample');if(!smp||!smp.json){say(await copyText(pr)?'Prompt copied. Paste it into Claude.':'Not available here.');return}
+     say('Reading the posting and your CV...');const o=await smp.json(pr);
+     await upd('roles',id,{plan:{changes:(o.changes||[]).slice(0,8).map((c,i)=>({id:'c'+i,text:String(c.text||''),why:String(c.why||''),ok:false})),cv:'',at:today()}});say('Tick the changes you approve.');return}
+   if(kind==='write'){const pr=coachPrompt('write',r);const smp=await claude.use('sample');if(!smp){say(await copyText(pr)?'Prompt copied. Paste it into Claude.':'Not available here.');return}
+     say('Writing your CV...');const o=await smp(pr);await upd('roles',id,{plan:{...(r.plan||{}),cv:(o&&o.text)||'',cvAt:today()}});say('Done. Edit it below if you like.');return}
+   if(kind==='copycv'){say(await copyText((r.plan||{}).cv||'')?'Copied':'Select the text and copy it by hand','cv-');return}
+   if(kind==='dl'){const body='<html><meta charset="utf-8"><body><pre style="font-family:Calibri,Arial,sans-serif;font-size:11pt;white-space:pre-wrap">'+esc((r.plan||{}).cv||'')+'</pre></body></html>';
+     say(await saveFile('cv-'+String(r.company||'role').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.doc',body)?'Saved':'Not saved','cv-')}
+  }catch(e){say('Could not do it now. Try again.')}}
+
+function renderPage(){
+  const typing=document.activeElement&&['TEXTAREA','INPUT'].includes(document.activeElement.tagName)&&$('page').contains(document.activeElement);
+  $('tabs').innerHTML=PAGES.map(([k,l])=>`<a href="#${k}" ${route===k?'aria-current="page"':''}>${svg(k)}${l}</a>`).join('');
+  if(typing)return;
+  $('page').innerHTML=route==='overview'?overview():route==='profile'?profile():route==='team'?teamPage():agentPage(route);
+}
+function renderDrawer(){
+  const Lr=$('layer');
+  if(Lr.contains(document.activeElement)&&['TEXTAREA','INPUT'].includes(document.activeElement.tagName))return;
+  if(!openId||!S.roles[openId]){Lr.innerHTML='';return}
+  const r=S.roles[openId],c=r.coach||{},cur=stageOf(r);
+  const fits=r.fits||(r.why?[r.why]:null),unf=r.unfits||(r.gap?[r.gap]:null);
+  const fx=(r.factors||[]).map(f=>`<li><b>${esc(f.label)}:</b> ${esc(f.note)}</li>`).join('');
+  const coachOn=['preparing','applied','followup'].includes(cur);
+  Lr.innerHTML=`<div class="scrim" data-close></div><aside class="drawer" role="dialog" aria-label="${esc(r.title)}">
+   <div class="row" style="justify-content:space-between"><span class="eyebrow">${esc(r.company)}</span><button class="btn alt" data-close>Close</button></div>
+   <h2>${esc(r.title)}</h2>
+   <div class="stepper" role="group" aria-label="Stage">${STAGES.map(s=>`<button data-stage="${s.id}" aria-current="${cur===s.id}">${s.label}</button>`).join('')}</div>
+   <dl class="kv"><dt>Where</dt><dd>${esc(r.location)}</dd><dt>Pay</dt><dd>${esc(r.pay||'not listed')}</dd><dt>Status</dt><dd>${esc(r.status||'')}, confirmed ${esc(r.confirmed||r.added||'')}</dd><dt>Fit / chance</dt><dd>${r.match!=null?r.match+'%':'—'} / ${r.chance!=null?r.chance+'%':'not scored'}</dd></dl>
+   <div class="fu"><div><h3 class="good">Where you fit</h3>${bul(fits)}</div><div><h3 class="bad">Where you don't</h3>${bul(unf)}</div></div>
+   ${r.caveats?`<div class="sec"><b>Caveats</b><p class="small">${esc(r.caveats)}</p></div>`:''}
+   ${fx?`<div class="sec"><b>Real-chance factors</b><ul class="tight small">${fx}</ul></div>`:''}
+   <div class="sec"><b>Matcher's broad advice</b><textarea id="adv" rows="3" data-advice="1" aria-label="Broad advice" ${canWrite?'':'disabled'}>${esc(r.advice||'')}</textarea></div>
+   ${coachOn?`<div class="sec"><b>Coach's kit</b>${['cv:CV angle','outreach:Cover note or outreach','approach:Approach'].map(p=>{const[k,l]=p.split(':');return `<label class="f small" for="co-${k}">${l}<textarea id="co-${k}" rows="3" data-coach="${k}" ${canWrite?'':'disabled'}>${esc(c[k]||'')}</textarea></label>`}).join('')}
+    <div class="row"><button class="btn alt" data-copy>Copy cover note</button><span class="saved" id="cosv"></span></div></div>`:''}
+   <div class="sec"><b>Your decision</b><div class="row"><button class="btn bad" data-fb="passed">Discard</button><button class="btn alt" data-fb="clear">Restore</button></div>
+    <label class="f small" for="reason">Reason, so the team learns<input type="text" id="reason" value="${esc(r.reason||'')}" ${canWrite?'':'disabled'}></label></div>
+   ${r.url?`<a href="${esc(r.url)}" target="_blank" rel="noopener">Open the posting</a>`:''}</aside>`;
+}
+function render(){renderPage();renderDrawer()}
+const loadJS=u=>new Promise((ok,no)=>{const e=document.createElement('script');e.src=u;e.onload=ok;e.onerror=no;document.head.appendChild(e)});
+async function cvToText(f){const n=f.name.toLowerCase();
+  if(/\.(txt|md)$/.test(n))return await f.text();
+  if(/\.rtf$/.test(n)){const t=await f.text();return t.replace(/\\par[d]?/g,'\n').replace(/\\'[0-9a-f]{2}/gi,'').replace(/\\[a-z]+-?\d* ?/gi,'').replace(/[{}]/g,'')}
+  if(/\.docx$/.test(n)){if(!window.JSZip)await loadJS('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    const z=await JSZip.loadAsync(await f.arrayBuffer());const x=await z.file('word/document.xml').async('string');
+    return x.replace(/<\/w:p>/g,'\n').replace(/<w:tab\/>/g,'\t').replace(/<w:br\/>/g,'\n').replace(/<[^>]+>/g,'').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'")}
+  if(/\.pdf$/.test(n)){const B='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';if(!window.pdfjsLib)await loadJS(B+'pdf.min.js');
+    pdfjsLib.GlobalWorkerOptions.workerSrc=B+'pdf.worker.min.js';
+    const d=await pdfjsLib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise;let out='';
+    for(let i=1;i<=Math.min(d.numPages,6);i++){const pg=await d.getPage(i);const c=await pg.getTextContent();let y=null;for(const it of c.items){if(y!==null&&Math.abs(it.transform[5]-y)>2)out+='\n';else if(y!==null)out+=' ';out+=it.str;y=it.transform[5]}out+='\n\n'}
+    return out}
+  return ''}
+async function extractCV(f){const m=$('cvsv');
+  try{if(m)m.textContent='Reading your CV...';
+    let t=(await cvToText(f)||'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+    if(t.length<80){if(m)m.textContent='I could not read text from that file. Paste the text below.';return}
+    await upd('profile','main',{cvText:t.slice(0,20000)});flash('CV read. Check the text below.')}
+  catch(e){if(m)m.textContent='I could not read text from that file. Paste the text below.'}}
+async function uploadCV(f){
+  const m=$('cvsv'),today=new Date().toISOString().slice(0,10);if(m)m.textContent='Uploading...';
+  try{const as=await claude.use('assets');if(as&&as.upload){const r=await as.upload(f);await upd('profile','main',{cv:{name:f.name,id:r.id,url:r.url,size:f.size,date:today}});return}}catch(e){}
+  if(window.__jd){if(f.size>3e6){if(m)m.textContent='Too large for local storage (3 MB max)';return}
+    const url=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(f)});
+    await upd('profile','main',{cv:{name:f.name,dataUrl:url,size:f.size,date:today}});return}
+  if(m)m.textContent='Uploading is only available to editors of this page'}
+async function upd(coll,id,data){ if(!db)return; try{await db.doc(coll+'/'+id).update(data)}catch(e){console.warn(e)} }
+function setRoute(){const h=(location.hash||'').slice(1);route=PAGES.some(p=>p[0]===h)?h:'overview';openId=null;render();window.scrollTo(0,0)}
+addEventListener('hashchange',setRoute);
+
+const TALK={}; const SAYN={};
+function sayFor(k){
+  const R=roles().filter(live),n=id=>R.filter(r=>stageOf(r)===id).length;
+  const st={scout:()=>{const c=n('found');return c?'New finds are waiting. Send the good ones to the Matcher and discard the rest.':'Nothing new waiting. I am still sniffing around.'},
+   matcher:()=>{const c=R.filter(r=>stageOf(r)==='matched'&&r.chance==null).length;return c?'I am scoring the roles you sent me. Scores appear here on their own.':'Everything with me is scored. Pick one to send to the Coach.'},
+   coach:()=>{const c=n('preparing');return c?'Applications are in preparation. Ask me what to change and approve what you like.':'Send me a role from the Matcher and I will start on it.'},
+   super:()=>{const c=folder().filter(dueFu).length;return c?'Some applications have had no news for a week. Time to follow up.':'Tell me what happens after you apply and I will spot what works.'}};
+  const tips={scout:['Max two roles per company, and I confirm each on the employer’s own page.','I search by industry and role type, not by brand.'],
+   matcher:['A strong fit is not the same as a real chance. I score both, honestly.','Tell me why you discard a role. I learn from it.'],
+   coach:['I only use what is true on your CV.','A short, specific note beats a long generic one.'],
+   super:['Applied roles get a follow-up reminder from me.','Train the team below: ask any of us anything about the process.']};
+  const all=[st[k]()].concat(tips[k]);const i=SAYN[k]=((SAYN[k]??-1)+1)%all.length;return all[i];
+}
+function heroStats(k){
+  const all=roles(),R=all.filter(live),n=id=>R.filter(r=>stageOf(r)===id).length;
+  if(k==='scout')return [[n('found'),'Found'],[R.filter(r=>['matched','preparing','applied','followup'].includes(stageOf(r))).length,'Sent on'],[all.filter(r=>stageOf(r)==='passed').length,'Discarded']];
+  if(k==='matcher')return [[n('matched'),'With me'],[R.filter(r=>stageOf(r)==='matched'&&r.chance==null).length,'To score'],[n('preparing'),'Sent to Coach']];
+  if(k==='coach')return [[n('preparing'),'In preparation'],[n('applied')+n('followup'),'Applied'],[(P().cv||P().cvText)?'Yes':'No','CV on file']];
+  return [[folder().length,'Applications'],[folder().filter(dueFu).length,'To follow up'],[Object.keys(S.memory).length,'Notes learned']];
+}
+function play(k,st){
+  const msg=T(sayFor(k));clearTimeout(TALK[k]);clearInterval(TALK[k+'i']);
+  const fx={scout:'<div class="scan">'+[0,1,2,3,4,5,6,7].map(i=>`<i style="animation-delay:${i*.18}s"></i>`).join('')+'</div>',
+   matcher:'<div class="ruler"><i></i></div>',coach:'',super:''}[k];
+  st.innerHTML=`${fx}<p class="say${k==='coach'?' note':''}"></p>`;
+  const p=st.querySelector('.say');
+  if(k==='coach'){let i=0;p.innerHTML='<span class="cur"></span>';TALK[k+'i']=setInterval(()=>{i++;p.textContent=msg.slice(0,i);if(i>=msg.length)clearInterval(TALK[k+'i'])},28)}
+  else{const d=k==='matcher'?1100:k==='scout'?1300:700;TALK[k]=setTimeout(()=>{p.textContent=msg},d)}
+}
+document.addEventListener('click',e=>{const d=e.target.closest('.head.own .disc.xl');if(!d)return;const h=d.closest('.head.own'),k=(h.className.match(/o-(\w+)/)||[])[1];if(!k)return;
+  d.classList.remove('act');void d.offsetWidth;d.classList.add('act');setTimeout(()=>d.classList.remove('act'),1900);
+  const st=h.querySelector('.stage');if(st)play(k,st)});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.head.own .disc.xl')){e.preventDefault();e.target.click()}});
+document.addEventListener('click',e=>{
+  if(e.target.closest('.scrim')){openId=null;render();return}
+  const t=e.target.closest('button');if(!t)return;
+  if(t.dataset.qa){const q=S.questions[t.dataset.qa];if(!q)return;const o=q.options[+t.dataset.oi];let a=q.answer;
+    if(q.multi){a=Array.isArray(a)?a.slice():(a?[a]:[]);a=a.includes(o)?a.filter(x=>x!==o):a.concat(o)}else{a=(a===o)?null:o}
+    {const raw=(RAW.questions&&RAW.questions[t.dataset.qa])||{};if(raw.answers||actKey()!=='_')upd('questions',t.dataset.qa,{answers:{...(raw.answers||{}),[actKey()]:a},answeredAt:new Date().toISOString().slice(0,10)});else upd('questions',t.dataset.qa,{answer:a,answeredAt:new Date().toISOString().slice(0,10)})}return}
+  if(t.dataset.pc){const f=t.dataset.pc,v=t.dataset.pv,cur=P()[f]||[];const nw=cur.includes(v)?cur.filter(x=>x!==v):cur.concat(v);const d={[f]:nw};if(f==='industryList')d.industries=nw.join(', ');upd('profile','main',d);return}
+  if(t.dataset.tadd){const f=t.dataset.tadd,i=$('tg-'+f),v=(i&&i.value||'').trim();if(!v)return;const cur=P()[f]||[];i.value='';i.blur();if(!cur.includes(v))upd('profile','main',{[f]:cur.concat(v)});return}
+  if(t.dataset.runideal){(async()=>{const m=$('idsv'),say=x=>{if(m)m.textContent=T(x)};const a=agent('scout');
+    if(!IDF.some(f=>(S.extras.ideal||{})[f[0]])){say('Write your 100% match first.');return}
+    if(!a.triggerId||window.__jd){const txt='Act as my job scout. Search the web for current openings that are SIMILAR to the ideal role below: the same title and its variants, the same level, industries and requirements. List the best 15 with title, company, location, link and one line on why it is close. Never invent roles: only list ones you can open on the employer\u2019s own page. Include weaker matches if they are near.\n\nMY 100% MATCH\n'+idealText()+'\nMY PROFILE\n'+profText();
+      let ok=false;try{await navigator.clipboard.writeText(txt);ok=true}catch(e){}
+      say(ok?'Search prompt copied. Paste it into Claude with web search on, then add what you like in the Scout tab.':'Could not copy. Use Copy search prompt in the Scout tab.');return}
+    try{const mcp=await claude.use('mcp');if(!mcp){say('Running the search is not available for your account here.');return}
+    t.disabled=true;say('Asking the Scout...');
+    const txt='ONE-TIME REQUEST for the active profile ('+(P().activeProfile||'none')+'): in this run, focus on roles SIMILAR TO THE 100% MATCH in extras/ideal. Search its title and close title variants, the same level, the same industries and employer types, and the requirements it lists as musts, first in the priority area, then the wider region, then remote. Include near matches and say in gap how they differ from the ideal. Use the usual rules for everything else. When finished, write the text "Done YYYY-MM-DD" into this document\u2019s reply field (update pinned to if_version). If reply is already filled, ignore this request.';
+    await db.doc('training/ideal-request').set({to:'scout',text:txt,date:new Date().toISOString().slice(0,10),ts:Date.now(),reply:''});
+    await mcp.callTool('Claude Code Remote','fire_trigger',{trigger_id:a.triggerId});
+    say('The Scout is looking for roles like your 100% match. New finds appear in the Scout tab.')}catch(e){say('Could not start the search ('+(e&&e.message||e)+').')}
+    t.disabled=false})();return}
+  if(t.dataset.runsearch){(async()=>{const m=$('rs-msg'),a=agent('scout');const say=x=>{if(m)m.textContent=x};
+    if(!a.triggerId||window.__jd){const p=P(),L=(k,v)=>v&&String(v).trim()?`${k}: ${String(v).trim()}\n`:'';
+      const txt='Act as my job scout. Search the web for current openings that fit my profile and list the best 10 with title, company, location, link and one line on why it fits. Never invent roles: only list ones you can open on the employer\u2019s own page. Max 2 roles per company. Search by industry and role type, not by a list of brands.\n\n'+L('Name',p.name)+L('Where I live or want to work',p.base)+L('Priority area',p.priorityLabel)+L('Regions, in search order',p.regions)+L('Industries',p.industries)+L('Roles I want',p.targets)+L('Level',p.level)+L('Always skip',p.avoid)+L('Never claim for me',p.truth)+L('Background',p.background);
+      let ok=false;try{await navigator.clipboard.writeText(txt);ok=true}catch(e){}
+      if(m)m.textContent=ok?'Search prompt copied. Paste it into Claude with web search on, then add the roles you like under “Add a role yourself”.':'Copy this prompt into Claude with web search on, then add the roles you like under “Add a role yourself”.';
+      if(!ok){const x=$('rs-prompt');if(x){x.hidden=false;x.value=txt;x.select()}}return}
+    try{const mcp=await claude.use('mcp');if(!mcp){say('Running the search is not available for your account here.');return}
+    t.disabled=true;say('Starting the Scout...');
+    await mcp.callTool('Claude Code Remote','fire_trigger',{trigger_id:a.triggerId});
+    say('Search started. It takes a few minutes. New finds appear here on their own.');
+    setTimeout(()=>{t.disabled=false},90000)}catch(err){t.disabled=false;say('Could not start the search ('+((err&&(err.code||err.message))||'error')+').')}})();return}
+  if(t.dataset.addrole){const g=i=>($(i)||{value:''}).value.trim();const ti=g('ar-t'),co=g('ar-c');if(!ti||!co||!db){const m=$('arsv');if(m)m.textContent='Add a title and a company';return}
+    db.collection('roles').add({profileId:P().activeProfile||'',title:ti,company:co,location:g('ar-l'),url:g('ar-u'),stage:'found',status:'OPEN',track:'home',source:'added by you',added:new Date().toISOString().slice(0,10),feedback:null}).then(()=>{['ar-t','ar-c','ar-l','ar-u'].forEach(i=>{$(i).value=''});const m=$('arsv');if(m)m.textContent='Added'});return}
+  if(t.dataset.localcopy){(async()=>{const m=$('lcsv');try{const dl=await claude.use('downloads');if(!dl){m.textContent='Saving is not available here';return}await dl.save({filename:'job-desk-local.html',data:LOCAL_COPY});m.textContent='Saved'}catch(e){m.textContent='Not saved'}})();return}
+  if(t.dataset.backup==='export'&&window.__jd){window.__jd.export();return}
+  if(t.dataset.backup==='import'&&window.__jd){$('bk-file').click();return}
+  if(t.dataset.cv==='remove'){upd('profile','main',{cv:null});return}
+  if(t.dataset.sp){(async()=>{const m=$('spsv'),id=t.dataset.spid,today=new Date().toISOString().slice(0,10);
+    const snapOf=()=>{const o=JSON.parse(JSON.stringify(P()));delete o.activeProfile;return o};
+    try{
+     if(t.dataset.sp==='new'){const n=($('sp-name').value||'').trim();if(!n){if(m)m.textContent='Give it a name';return}const prevA=P().activeProfile||'';const ref=await db.collection('profiles').add({label:n,savedAt:today,data:snapOf()});if(!prevA){for(const [rid,r] of Object.entries(S.roles))if(!r.profileId)await upd('roles',rid,{profileId:ref.id});for(const [mid,mm] of Object.entries(S.memory))if(!mm.profileId)await upd('memory',mid,{profileId:ref.id})}await upd('profile','main',{activeProfile:ref.id});$('sp-name').value=''}
+     else if(t.dataset.sp==='use'){const sp=S.profiles[id];if(!sp)return;await db.doc('profile/main').set({...sp.data,activeProfile:id})}
+     else if(t.dataset.sp==='update'){const sp=S.profiles[id];if(!sp)return;await db.doc('profiles/'+id).set({label:sp.label,savedAt:today,data:snapOf()});if(m)m.textContent='Saved'}
+     else if(t.dataset.sp==='del'){await db.doc('profiles/'+id).delete();if(P().activeProfile===id)await upd('profile','main',{activeProfile:null})}
+    }catch(e){if(m)m.textContent='Could not save'}})();return}
+  if(t.dataset.move){const to=t.dataset.move,d={};if(to==='matched'){d.feedback='liked';d.feedbackAt=today()}moveRole(t.dataset.rid,to,d);if(to==='matched'){flash('Sent to the Matcher. It scores it on its own.');fireMatcher()}return}
+  if(t.dataset.pass){upd('roles',t.dataset.rid,{stage:'passed',feedback:'passed',feedbackAt:new Date().toISOString().slice(0,10)});return}
+  if(t.dataset.sug){const x=$('tr-text');if(x){x.value=t.dataset.sug;x.focus()}return}
+  if(t.dataset.train){const x=$('tr-text'),to=$('tr-to');if(!x||!x.value.trim()||!db)return;const v=x.value.trim();x.value='';
+    db.collection('training').add({to:to.value,text:v,date:new Date().toISOString().slice(0,10),ts:Date.now()}).then(()=>{const s=$('trsv');if(s)s.textContent='Sent'}).catch(()=>{const s=$('trsv');if(s)s.textContent='Could not save'});return}
+  if(t.dataset.id){openId=t.dataset.id;render();return}
+  if('close' in t.dataset){openId=null;render();return}
+  if(!openId)return;
+  if(t.dataset.stage){moveRole(openId,t.dataset.stage);if(t.dataset.stage==='matched')fireMatcher()}
+  if(t.dataset.fb){const v=t.dataset.fb;const d=v==='clear'?{feedback:null,stage:'found'}:{feedback:v,feedbackAt:new Date().toISOString().slice(0,10),stage:'passed'};upd('roles',openId,d)}
+  if('copy' in t.dataset){const x=(S.roles[openId].coach||{}).outreach||'';(navigator.clipboard?navigator.clipboard.writeText(x):Promise.reject()).then(()=>{$('cosv').textContent='Copied'}).catch(()=>{$('cosv').textContent='Select the text and copy it by hand'})}
+});
+document.addEventListener('input',e=>{const el=e.target;if(el.dataset&&el.dataset.lv){const a=$('lv-min'),b=$('lv-max');let lo=+a.value,hi=+b.value;if(lo>hi){if(el===a){b.value=lo;hi=lo}else{a.value=hi;lo=hi}}$('lv-a').textContent=LV[lo];$('lv-b').textContent=LV[hi];const f=$('lv-fill');f.style.left=`calc(11px + (100% - 22px) * ${lo/4})`;f.style.right=`calc(11px + (100% - 22px) * ${1-hi/4})`;for(let i=0;i<5;i++){const t=$('lvt-'+i);if(t)t.className=(i>=lo&&i<=hi)?'on':''}}});
+document.addEventListener('change',async e=>{const el=e.target;if(el.id==='bk-file'&&el.files[0]&&window.__jd){window.__jd.import(el.files[0]);return}
+  if(el.id==='li-file'&&el.files[0]){(async()=>{const f=el.files[0],m=$('lisv');if(m)m.textContent=T('Reading your CV...');try{let t=(await cvToText(f)||'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();if(t.length<80){if(m)m.textContent=T('I could not read text from that file. Paste the text below.');return}await upd('profile','main',{linkedinText:t.slice(0,20000)});const ta=$('pf-linkedinText');if(ta)ta.value=t.slice(0,20000);if(m)m.textContent='';flash('LinkedIn text read. Check it below.')}catch(e){if(m)m.textContent=T('I could not read text from that file. Paste the text below.')}})();return}
+  if(el.id==='cv-file'&&el.files[0]){uploadCV(el.files[0]).then(()=>extractCV(el.files[0]));return}if(!el.dataset)return;
+  if(el.dataset.lv){const lo=+$('lv-min').value,hi=+$('lv-max').value;await upd('profile','main',{levelMin:lo,levelMax:hi,level:LV[lo]===LV[hi]?LV[lo]:LV[lo]+' to '+LV[hi]})}
+  if(el.dataset.sal){const v=el.dataset.sal==='currency'?el.value:(el.value.replace(/[^0-9]/g,'')||'');await upd('profile','main',{[el.dataset.sal]:v})}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.dataset&&e.target.dataset.tgin){e.preventDefault();const b=document.querySelector('[data-tadd="'+e.target.dataset.tgin+'"]');if(b)b.click();return}if(e.key==='Escape'&&openId){openId=null;render()}});
+document.addEventListener('focusout',async e=>{
+  const el=e.target;if(!el.dataset)return;
+  if(el.dataset.qother){await upd('questions',el.dataset.qother,{other:el.value})}
+  else if(el.dataset.p){await upd('profile','main',{[el.dataset.p]:el.value});const s=$('pfsv');if(s)s.textContent='Saved'}
+  else if(el.dataset.coach&&openId){await upd('roles',openId,{coach:{[el.dataset.coach]:el.value}});const s=$('cosv');if(s)s.textContent='Saved'}
+  else if(el.dataset.advice&&openId){await upd('roles',openId,{advice:el.value})}
+  else if(el.id==='reason'&&openId){await upd('roles',openId,{reason:el.value})}
+});
+
+/* ---- v2 handlers ---- */
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,[data-pall]');if(!t)return;const d=t.dataset||{};
+  if(d.score){scoreHere(d.score);return}
+  if(d.scoreprompt){const r=S.roles[d.scoreprompt];if(r)copyText(scorePrompt(r)).then(ok=>flash(ok?'Prompt copied. Paste it into Claude and add the scores by hand in the role.':'Not available here.'));return}
+  if(d.superrev){superReview();return}
+  if(d.hide){toggleHide(d.hide);return}
+  if(d.ideal==='gen'){genIdeal();return}
+  if(d.cmpask){cmpAsk();return}
+  if(d.cact){coachAct(d.cact,d.rid);return}
+  if(d.out){const r=S.roles[d.rid];if(!r)return;const h=(r.history||[]).concat({date:today(),outcome:d.out,note:r.outcomeNote||''});upd('roles',d.rid,{outcome:d.out,outcomeAt:today(),history:h});if(d.out!=='waiting')flash('Noted. I use it to follow up and to learn what works.');return}
+  if(d.fucopy){const r=S.roles[d.fucopy];if(r)copyText(fuNote(r)).then(ok=>flash(ok?'Follow-up note copied.':'Not available here.'));return}
+  if(d.addapp){const g=i=>($(i)||{value:''}).value.trim();const ti=g('ap-t'),co=g('ap-c');const m=$('apsv');if(!ti||!co||!db){if(m)m.textContent=T('Add a title and a company');return}
+    const dt=/^\d{4}-\d{2}-\d{2}$/.test(g('ap-d'))?g('ap-d'):today();
+    db.collection('roles').add({profileId:P().activeProfile||'',title:ti,company:co,location:'',url:g('ap-u'),stage:'applied',status:'OPEN',track:'home',source:'added by you',added:dt,movedAt:dt,appliedAt:dt,outcome:'waiting',feedback:'liked'}).then(()=>{['ap-t','ap-c','ap-u','ap-d'].forEach(i=>{if($(i))$(i).value=''});if(m)m.textContent=T('Added')});return}
+  if(d.pgo!==undefined){const v=d.pgo;pStep=v==='prev'?Math.max(0,pStep-1):v==='next'?Math.min(5,pStep+1):+v;try{localStorage.setItem('jd-pstep',String(pStep))}catch(x){}pAll=false;render();window.scrollTo(0,0);return}
+  if(d.pall!==undefined){pAll=!pAll;render();return}
+});
+document.addEventListener('change',e=>{const el=e.target;if(!el.dataset)return;
+  if(el.dataset.cmp){CMP[el.dataset.cmp]=el.value;CMP.v='';render();return}
+  if(el.dataset.chg!==undefined){const r=S.roles[el.dataset.rid];if(!r)return;const pl=r.plan||{},ch=(pl.changes||[]).map((c,i)=>i===+el.dataset.chg?{...c,ok:el.checked}:c);upd('roles',el.dataset.rid,{plan:{...pl,changes:ch}})}
+});
+document.addEventListener('focusout',async e=>{const el=e.target;if(!el.dataset)return;
+  if(el.dataset.idealf){await put('extras','ideal',{[el.dataset.idealf]:el.value,edited:true});const s=$('idsv');if(s)s.textContent=T('Saved')}
+  else if(el.dataset.outnote){await upd('roles',el.dataset.outnote,{outcomeNote:el.value})}
+  else if(el.dataset.plancv){const r=S.roles[el.dataset.plancv];if(r)await upd('roles',el.dataset.plancv,{plan:{...(r.plan||{}),cv:el.value}})}
+});
+
+const RAW={};
+const ownerOf=x=>x&&x.profileId||'';
+const actKey=()=>(RAW.profile&&RAW.profile.main&&RAW.profile.main.activeProfile)||'_';
+const ADV=['growth','changes','report','patternFits','patternUnfits'];
+function scope(){const a=(RAW.profile&&RAW.profile.main&&RAW.profile.main.activeProfile)||'',ak=a||'_';
+  for(const k of Object.keys(RAW)){
+    if(k==='roles'||k==='memory'){const o={};for(const [id,r] of Object.entries(RAW[k]))if(ownerOf(r)===a)o[id]=r;S[k]=o}
+    else if(k==='news'){const o={};for(const [id,r] of Object.entries(RAW[k]))if(!r.profileId||r.profileId===a)o[id]=r;S[k]=o}
+    else if(k==='agents'){const o={};for(const [id,g] of Object.entries(RAW[k])){const b={...g};if(g.byProfile){ADV.forEach(f=>delete b[f]);Object.assign(b,g.byProfile[ak]||{})}o[id]=b}S[k]=o}
+    else if(k==='questions'){const o={};for(const [id,q] of Object.entries(RAW[k])){const b={...q};if(q.answers){b.answer=q.answers[ak];b.answeredAt=undefined}o[id]=b}S[k]=o}
+    else S[k]=RAW[k]}}
+/* ---- language (EN/ES) ---- */
+const ES={
+"Job Desk": "Job Desk",
+"Scout": "Scout",
+"Matcher": "Matcher",
+"Coach": "Coach",
+"Supervisor": "Supervisor",
+"How it works": "Cómo funciona",
+"Profile": "Perfil",
+"@Pages": "Páginas",
+"Close": "Cerrar",
+"Add": "Añadir",
+"Send": "Enviar",
+"Discard": "Descartar",
+"Restore": "Restaurar",
+"Use": "Usar",
+"Delete": "Eliminar",
+"Replace": "Reemplazar",
+"Remove": "Quitar",
+"Open": "Abrir",
+"Download": "Descargar",
+"Other": "Otro",
+"(pick any)": "(elige las que quieras)",
+"Manual": "Manual",
+"Yes": "Sí",
+"No": "No",
+"Create your profile here, and start looking!": "¡Crea tu perfil aquí y empieza a buscar!",
+"Tell the team what you want and what you know. It takes a couple of minutes, mostly taps.": "Cuéntale al equipo qué quieres y qué sabes. Toma un par de minutos, casi todo con toques.",
+"Create your profile": "Crear tu perfil",
+"Job Desk is a small team that finds, vets, prepares and tracks opportunities for you. Each option moves left to right. You make every call, and nothing is ever applied for you.": "Job Desk es un pequeño equipo que encuentra, evalúa, prepara y sigue oportunidades por ti. Cada opción avanza de izquierda a derecha. Tú tomas cada decisión y nunca se postula nada por ti.",
+"Your team": "Tu equipo",
+"Looks wide inside your borders.": "Mira en amplio dentro de tus límites.",
+"Ranks roles by fit and your real odds.": "Ordena los cargos por ajuste y tus probabilidades reales.",
+"Tailors your CV, note and approach.": "Adapta tu CV, tu nota y tu estrategia.",
+"Keeps the process healthy.": "Mantiene el proceso en orden.",
+"Found": "Encontrados",
+"With Matcher": "Con el Matcher",
+"Preparing": "En preparación",
+"Applied": "Postulado",
+"Follow-up": "Seguimiento",
+"The Scout brings options": "El Scout trae opciones",
+"Scored for fit and real chance": "Puntuados por ajuste y opción real",
+"The Coach tailors your application": "El Coach adapta tu postulación",
+"You send it": "Tú la envías",
+"The Supervisor chases and reviews": "El Supervisor da seguimiento y revisa",
+"Needs your attention": "Necesita tu atención",
+"Nothing needs you right now.": "Nada requiere tu atención por ahora.",
+"Share your current CV so the Coach can tailor it": "Comparte tu CV actual para que el Coach lo adapte",
+"Market notes": "Notas de mercado",
+"Notes appear here when something affects your search.": "Aquí aparecen notas cuando algo afecta tu búsqueda.",
+"For you:": "Para ti:",
+"Finds roles": "Encuentra cargos",
+"Scores fit and real chance": "Puntúa ajuste y opción real",
+"Prepares applications": "Prepara postulaciones",
+"Follow-up and oversight": "Seguimiento y supervisión",
+"Runs": "Se ejecuta",
+"on demand in this copy": "a pedido en esta copia",
+"Last run": "Última ejecución",
+"Sent on": "Enviados",
+"Discarded": "Descartados",
+"With me": "Conmigo",
+"To score": "Por puntuar",
+"Sent to Coach": "Enviados al Coach",
+"In preparation": "En preparación",
+"CV on file": "CV cargado",
+"Active": "Activos",
+"Open questions": "Preguntas abiertas",
+"Notes learned": "Notas aprendidas",
+"Tools": "Herramientas",
+"Nothing here yet. Send finds from the Scout.": "Aún no hay nada. Envía hallazgos desde el Scout.",
+"Looks across every industry and region inside your profile and brings back anything worth a look, confirmed on the employer's own page. In this local copy you add roles yourself.": "Recorre todas las industrias y regiones dentro de tu perfil y trae todo lo que valga la pena, confirmado en la página del empleador. En esta copia local añades los cargos tú mismo.",
+"Send the ones worth a closer look to the Matcher. Discard the rest.": "Envía al Matcher los que valgan una mirada más de cerca. Descarta el resto.",
+"No new finds waiting.": "No hay hallazgos nuevos esperando.",
+"unscored": "sin puntuar",
+"Send to Matcher": "Enviar al Matcher",
+"Send to Coach": "Enviar al Coach",
+"Mark applied": "Marcar como postulado",
+"Move to follow-up": "Pasar a seguimiento",
+"Add a role yourself": "Añade un cargo tú mismo",
+"Job title": "Título del cargo",
+"Company": "Empresa",
+"Location and work mode": "Ubicación y modalidad",
+"Link to the posting": "Enlace a la oferta",
+"Add to Found": "Añadir a Encontrados",
+"Sources": "Fuentes",
+"None recorded.": "Ninguna registrada.",
+"Job boards": "Portales de empleo",
+"Search them yourself and add what you find.": "Búscalos tú mismo y añade lo que encuentres.",
+"Employer pages": "Páginas de empleadores",
+"Confirm a role is live before you add it.": "Confirma que el cargo siga vigente antes de añadirlo.",
+"Your profile sets the borders, not a list of companies": "Tu perfil fija los límites, no una lista de empresas",
+"Confirm every role on the employer's own page": "Confirma cada cargo en la página del propio empleador",
+"Max 2 roles per company": "Máximo 2 cargos por empresa",
+"Run search now": "Buscar ahora",
+"Running the search is not available for your account here.": "Aquí tu cuenta no puede iniciar la búsqueda.",
+"Starting the Scout...": "Iniciando al Scout...",
+"Search started. It takes a few minutes. New finds appear here on their own.": "Búsqueda iniciada. Toma unos minutos. Los hallazgos nuevos aparecen aquí solos.",
+"Compares each posting with your profile and says where you fit and where you don't.": "Compara cada oferta con tu perfil y dice dónde encajas y dónde no.",
+"What fits you, what doesn't": "Qué te encaja y qué no",
+"Fits": "Encaja",
+"Doesn't fit": "No encaja",
+"Not assessed yet.": "Aún sin evaluar.",
+"With the Matcher": "Con el Matcher",
+"How scoring works": "Cómo se puntúa",
+"Fit": "Ajuste",
+"compares the posting's real requirements with your background.": "compara los requisitos reales de la oferta con tu trayectoria.",
+"Chance": "Opción real",
+"adjusts fit for work status, language, local experience, employer culture and referral access. The Matcher also gives broad advice on how to approach the CV and the application, then hands the role to the Coach for the detailed work.": "corrige el ajuste según situación laboral, idioma, experiencia local, cultura del empleador y acceso a referidos. El Matcher también da consejos generales sobre cómo enfocar el CV y la postulación, y luego pasa el cargo al Coach para el trabajo detallado.",
+"Your profile": "Tu perfil",
+"Background, level and constraints.": "Trayectoria, nivel y restricciones.",
+"The posting": "La oferta",
+"Real requirements and years required.": "Requisitos reales y años exigidos.",
+"Tiers: Strong, Stretch, Long shot": "Niveles: Fuerte, Alcanzable, Difícil",
+"State the gap and what would close it": "Indica la brecha y qué la cerraría",
+"Where you fit": "Dónde encajas",
+"Where you don't": "Dónde no encajas",
+"Broad advice:": "Consejo general:",
+"Strong": "Fuerte",
+"Stretch": "Alcanzable",
+"Long shot": "Difícil",
+"Turns the Matcher's advice into a CV angle, a cover note and an approach plan for one role.": "Convierte el consejo del Matcher en un enfoque de CV, una carta de presentación y un plan de acercamiento para un cargo.",
+"Send a role from the Matcher and the Coach starts on it.": "Envía un cargo desde el Matcher y el Coach empieza con él.",
+"How the Coach works": "Cómo trabaja el Coach",
+"Reads the Matcher's broad advice for the role.": "Lee el consejo general del Matcher para el cargo.",
+"Tailors your CV angle to the posting, using only what is true.": "Adapta el enfoque de tu CV a la oferta, usando solo lo que es verdad.",
+"Drafts a cover note or outreach message.": "Redacta una carta de presentación o un mensaje de contacto.",
+"Plans the approach: who to contact, referral angle, timing.": "Planifica el acercamiento: a quién contactar, vía de referido, momento.",
+"Needs your CV. Upload it on the Profile page.": "Necesita tu CV. Súbelo en la página Perfil.",
+"Your CV": "Tu CV",
+"The source for every tailored version.": "La base de cada versión adaptada.",
+"Mirror its priorities and language.": "Refleja sus prioridades y su lenguaje.",
+"Use only what is true": "Usa solo lo que es verdad",
+"Never apply on your behalf": "Nunca se postula en tu nombre",
+"Tracks applications, follows up, and suggests skills and where to focus.": "Sigue las postulaciones, hace seguimiento y sugiere habilidades y dónde enfocarte.",
+"Applied and follow-up": "Postulados y seguimiento",
+"No applications yet.": "Aún no hay postulaciones.",
+"Latest report": "Último informe",
+"Welcome. Fill in your profile, upload your CV, then add roles you find on the Scout page.": "Bienvenido. Completa tu perfil, sube tu CV y luego añade los cargos que encuentres en la página del Scout.",
+"Proposed changes to the team": "Cambios propuestos al equipo",
+"Train the team": "Entrena al equipo",
+"Ask a question, give an instruction or correct a habit for any part of the process. The Supervisor answers and updates the helper.": "Haz una pregunta, da una instrucción o corrige un hábito en cualquier parte del proceso. El Supervisor responde y actualiza al ayudante.",
+"About": "Sobre",
+"The whole process": "Todo el proceso",
+"Scout (finding)": "Scout (búsqueda)",
+"Matcher (fit and chance)": "Matcher (ajuste y opción real)",
+"Coach (applications)": "Coach (postulaciones)",
+"Supervisor (follow-up)": "Supervisor (seguimiento)",
+"Why was this role ranked above that one?": "¿Por qué este cargo quedó sobre aquel?",
+"Look at smaller or newer companies too": "Mira también empresas más pequeñas o nuevas",
+"What should I improve in my CV?": "¿Qué debería mejorar en mi CV?",
+"What am I missing for roles like these?": "¿Qué me falta para cargos como estos?",
+"@e.g. Why did the Scout skip this kind of role? / Look at smaller companies too.": "@p. ej. ¿Por qué el Scout omitió este tipo de cargo? / Mira también empresas más pequeñas.",
+"@Your question or instruction": "@Tu pregunta o instrucción",
+"Waiting for a reply": "Esperando respuesta",
+"Reply:": "Respuesta:",
+"whole process": "todo el proceso",
+"Questions for you": "Preguntas para ti",
+"Tap to answer. These tune every helper and apply to anyone's profile.": "Toca para responder. Afinan a cada ayudante y sirven para el perfil de cualquiera.",
+"How much more pay makes a move worth it?": "¿Cuánto más de sueldo hace que valga la pena un cambio?",
+"A bigger role at similar pay": "Un cargo mayor con sueldo similar",
+"About 10% more": "Cerca de 10% más",
+"About 20% more": "Cerca de 20% más",
+"30% or more": "30% o más",
+"Pay matters less than the work": "El sueldo importa menos que el trabajo",
+"How many days a week in an office can you accept?": "¿Cuántos días a la semana en oficina puedes aceptar?",
+"None, fully remote": "Ninguno, 100% remoto",
+"1 to 2": "1 a 2",
+"3": "3",
+"4 to 5": "4 a 5",
+"When you discard a role, what is usually the reason?": "Cuando descartas un cargo, ¿cuál suele ser el motivo?",
+"Wrong field": "Área equivocada",
+"Level too low": "Nivel demasiado bajo",
+"Level too high": "Nivel demasiado alto",
+"Location or commute": "Ubicación o traslado",
+"Pay": "Sueldo",
+"Not interested in the work": "No me interesa el trabajo",
+"Where are you weakest on paper?": "¿Dónde eres más débil en el papel?",
+"Local work history": "Historial laboral local",
+"Language or accent": "Idioma o acento",
+"Professional network": "Red profesional",
+"Years of experience": "Años de experiencia",
+"Industry experience": "Experiencia en la industria",
+"Technical skills": "Habilidades técnicas",
+"Work status": "Situación laboral",
+"Do you have contacts who could refer you in your target industries?": "¿Tienes contactos que podrían referirte en tus industrias objetivo?",
+"Several": "Varios",
+"One or two": "Uno o dos",
+"None yet": "Ninguno aún",
+"Not sure": "No estoy seguro",
+"How many hours a week can you give to applications?": "¿Cuántas horas a la semana puedes dedicar a postular?",
+"Under 2": "Menos de 2",
+"2 to 5": "2 a 5",
+"5 to 10": "5 a 10",
+"More than 10": "Más de 10",
+"How open are you to relocating for an exceptional role?": "¿Qué tan abierto estás a mudarte por un cargo excepcional?",
+"Not at all": "Para nada",
+"Within my region": "Dentro de mi región",
+"Within my country": "Dentro de mi país",
+"Anywhere": "A cualquier parte",
+"How actively are you searching?": "¿Qué tan activamente buscas?",
+"Only exceptional roles": "Solo cargos excepcionales",
+"Steady, a few good options a week": "Constante, unas pocas buenas opciones por semana",
+"Actively, as many as possible": "Activamente, cuantas más mejor",
+"How often should the Supervisor contact you?": "¿Con qué frecuencia debe contactarte el Supervisor?",
+"Only when something needs me": "Solo cuando algo me necesite",
+"Weekly digest": "Resumen semanal",
+"Daily summary": "Resumen diario",
+"What the team has learned": "Lo que el equipo ha aprendido",
+"Show the notebook": "Mostrar el cuaderno",
+"Liked": "Te gustaron",
+"Nothing yet.": "Aún nada.",
+"Rules": "Reglas",
+"Preferences are borders for the search, not a list of companies": "Las preferencias son límites de búsqueda, no una lista de empresas",
+"Only use what is true about you": "Usa solo lo que es verdad sobre ti",
+"Board": "Tablero",
+"Counts roles by stage and flags stuck ones.": "Cuenta los cargos por etapa y marca los estancados.",
+"Notebook": "Cuaderno",
+"Records what you liked and discarded.": "Registra lo que te gustó y lo que descartaste.",
+"Proposes changes, never applies them silently": "Propone cambios, nunca los aplica en silencio",
+"Skills and focus": "Habilidades y enfoque",
+"Where to build skills and where to spend your effort, based on the gaps the Matcher keeps finding.": "Dónde desarrollar habilidades y dónde poner tu esfuerzo, según las brechas que el Matcher sigue encontrando.",
+"Focus": "Enfoque",
+"Skill": "Habilidad",
+"Not listed.": "No indicado.",
+"Discarded roles": "Cargos descartados",
+"New finds are waiting. Send the good ones to the Matcher and discard the rest.": "Hay hallazgos nuevos. Envía los buenos al Matcher y descarta el resto.",
+"Nothing new waiting. I am still sniffing around.": "No hay nada nuevo. Sigo olfateando por ahí.",
+"Max two roles per company, and I confirm each on the employer’s own page.": "Máximo dos cargos por empresa, y confirmo cada uno en la página del propio empleador.",
+"I search by industry and role type, not by brand.": "Busco por industria y tipo de cargo, no por marca.",
+"Some roles are still unscored. Open one to see fit and real chance.": "Algunos cargos siguen sin puntuar. Abre uno para ver ajuste y opción real.",
+"Everything with me is scored. Pick one to send to the Coach.": "Todo lo que tengo está puntuado. Elige uno para enviar al Coach.",
+"A strong fit is not the same as a real chance. I score both, honestly.": "Un buen ajuste no es lo mismo que una opción real. Puntúo ambos, con honestidad.",
+"Tell me why you discard a role. I learn from it.": "Dime por qué descartas un cargo. Aprendo de eso.",
+"Applications are in preparation. Open one and I will draft the angle.": "Hay postulaciones en preparación. Abre una y redacto el enfoque.",
+"Send me a role from the Matcher and I will start on it.": "Envíame un cargo desde el Matcher y empiezo con él.",
+"I only use what is true on your CV.": "Solo uso lo que es verdad en tu CV.",
+"A short, specific note beats a long generic one.": "Una nota corta y específica gana a una larga y genérica.",
+"A few questions below are waiting for you. A few taps sharpen every search.": "Hay preguntas abajo esperándote. Unos toques afinan cada búsqueda.",
+"All your questions are answered. Check Skills and focus for what to learn next.": "Respondiste todas tus preguntas. Mira Habilidades y enfoque para saber qué aprender.",
+"Applied roles get a follow-up reminder from me.": "Yo te recuerdo hacer seguimiento de los cargos postulados.",
+"Train the team below: ask any of us anything about the process.": "Entrena al equipo abajo: pregúntanos lo que quieras sobre el proceso.",
+"Four specialists hand your search from one to the next. You make every decision.": "Cuatro especialistas se pasan tu búsqueda de uno a otro. Tú tomas cada decisión.",
+"The process": "El proceso",
+"You": "Tú",
+"Set your profile": "Define tu perfil",
+"Send or discard": "Envía o descarta",
+"Scores and advises": "Puntúa y aconseja",
+"Tailors your application": "Adapta tu postulación",
+"Apply": "Postula",
+"Supervisor, the whole way through": "Supervisor, durante todo el camino",
+"Watches every step, follows up after you apply, learns from your choices, and suggests skills and where to focus.": "Vigila cada paso, hace seguimiento después de postular, aprende de tus decisiones y sugiere habilidades y dónde enfocarte.",
+"Meet the team": "Conoce al equipo",
+"A hound. Casts a wide net across every industry and region inside your borders.": "Un sabueso. Lanza una red amplia por todas las industrias y regiones dentro de tus límites.",
+"Raised on the Coast Mountain trails, Scout learned to follow faint scents others missed. Never trusts a lead until it is confirmed at the source.": "Criado en los senderos de las Coast Mountains, Scout aprendió a seguir rastros tenues que otros pasaban por alto. Nunca confía en una pista hasta confirmarla en la fuente.",
+"Hands off to:": "Pasa a:",
+"You decide: discard, or send to the Matcher.": "Tú decides: descartar o enviar al Matcher.",
+"Measures each role against your background without flattery.": "Mide cada cargo contra tu trayectoria, sin adulación.",
+"A tailor by trade, now taking the measure of job postings. Tells you where a role fits, where it needs altering, and when it is simply the wrong cut.": "Sastre de oficio, ahora toma las medidas a las ofertas de trabajo. Te dice dónde un cargo te queda bien, dónde necesita ajustes y cuándo simplemente no es tu corte.",
+"The Coach, with broad advice on CV and approach.": "El Coach, con consejos generales sobre CV y enfoque.",
+"Turns broad advice into a tailored application, one role at a time.": "Convierte consejos generales en una postulación a medida, un cargo a la vez.",
+"A veteran career coach who has seen every kind of hiring process. Patient, practical and fond of the question 'what are they really asking for?'": "Un coach de carrera veterano que ha visto todo tipo de procesos de selección. Paciente, práctico y aficionado a la pregunta «¿qué piden realmente?».",
+"You, ready to apply.": "Tú, listo para postular.",
+"Keeps the whole process healthy, from the first find to the follow-up.": "Mantiene todo el proceso en orden, desde el primer hallazgo hasta el seguimiento.",
+"A spreadsheet enthusiast with a pocket full of pens. Checks everything twice, remembers every conversation and never lets a follow-up slip.": "Un entusiasta de las planillas con el bolsillo lleno de lápices. Revisa todo dos veces, recuerda cada conversación y nunca deja pasar un seguimiento.",
+"Feeds what it learns back to the others.": "Devuelve lo que aprende a los demás.",
+"Ground rules": "Reglas básicas",
+"You set the borders": "Tú fijas los límites",
+"Your profile says where, what level and what to avoid. These are limits, not a shopping list.": "Tu perfil dice dónde, qué nivel y qué evitar. Son límites, no una lista de compras.",
+"We look wide": "Miramos en amplio",
+"The Scout searches by industry and role type, not a fixed list of employers.": "El Scout busca por industria y tipo de cargo, no por una lista fija de empleadores.",
+"Honest by default": "Honestos por defecto",
+"We only use what is true about you and say plainly where you do not fit.": "Solo usamos lo que es verdad sobre ti y decimos claro dónde no encajas.",
+"We learn from you": "Aprendemos de ti",
+"Every like, discard and answer improves the next run.": "Cada me gusta, descarte y respuesta mejora la siguiente ejecución.",
+"These are borders, not a shopping list. The Scout looks wide inside them. This desk is set up for one person. Anyone with a different career fills in their own profile and the helpers adapt.": "Son límites, no una lista de compras. El Scout mira en amplio dentro de ellos. Este escritorio está armado para una persona. Quien tenga otra carrera completa su propio perfil y los ayudantes se adaptan.",
+"Share it": "Compártelo",
+"Show it": "Muéstralo",
+"Share the link as view-only. People can look but cannot change anything. They would see your profile and roles.": "Comparte el enlace solo para ver. Pueden mirar pero no cambiar nada. Verían tu perfil y tus cargos.",
+"Try it locally": "Pruébalo en local",
+"Save a clean copy with an empty profile. It opens in any browser, keeps its data on that computer, and is edited by hand there. The daily Scout does not run in a local copy.": "Guarda una copia limpia con el perfil vacío. Se abre en cualquier navegador, guarda sus datos en ese computador y se edita a mano ahí. El Scout diario no corre en una copia local.",
+"Save a local copy": "Guardar una copia local",
+"Run it fully": "Úsalo completo",
+"Ask Claude for a separate copy of Job Desk with its own profile and its own daily Scout.": "Pídele a Claude una copia separada de Job Desk con su propio perfil y su propio Scout diario.",
+"Saving is not available here": "Aquí no se puede guardar",
+"Saved": "Guardado",
+"Not saved": "No se guardó",
+"Could not save": "No se pudo guardar",
+"Added": "Añadido",
+"Add a title and a company": "Añade un título y una empresa",
+"Give it a name": "Ponle un nombre",
+"Saved profiles": "Perfiles guardados",
+"Snapshots of your search settings, so a change never costs you the original. Switching changes what the Scout looks for. The board of roles stays the same. For a different person, use a separate copy.": "Instantáneas de tu configuración de búsqueda, para que un cambio nunca te cueste el original. Cambiar de perfil cambia lo que busca el Scout. El tablero de cargos sigue igual. Para otra persona, usa una copia aparte.",
+"No saved profiles yet.": "Aún no hay perfiles guardados.",
+"Save current as new": "Guardar el actual como nuevo",
+"Overwrite with current": "Sobrescribir con el actual",
+"in use": "en uso",
+"@Name this profile, e.g. Remote only": "@Nombra este perfil, p. ej. Solo remoto",
+"@Profile name": "@Nombre del perfil",
+"The basics": "Lo básico",
+"Your name": "Tu nombre",
+"Where you live or want to work": "Dónde vives o quieres trabajar",
+"Priority area (short label)": "Área prioritaria (etiqueta corta)",
+"Priority area keywords, comma separated": "Palabras clave del área prioritaria, separadas por comas",
+"Search order of regions": "Orden de búsqueda de regiones",
+"Industries you want (or \"any\")": "Industrias que quieres (o «cualquiera»)",
+"Roles you want": "Cargos que quieres",
+"Level": "Nivel",
+"Always skip": "Omitir siempre",
+"Never claim (keeps applications honest)": "Nunca afirmar (mantiene honestas las postulaciones)",
+"Short background the helpers should use": "Trayectoria breve que deben usar los ayudantes",
+"Short background the Matcher and Coach should use": "Trayectoria breve que deben usar el Matcher y el Coach",
+"Drag both handles to the range you want to be considered for. Years are a rough guide.": "Arrastra ambos controles al rango para el que quieres ser considerado. Los años son una guía aproximada.",
+"From:": "Desde:",
+"To:": "Hasta:",
+"Entry": "Inicial",
+"Associate": "Asociado",
+"Mid": "Intermedio",
+"Senior": "Senior",
+"Lead": "Líder",
+"0-2 yrs": "0-2 años",
+"2-4 yrs": "2-4 años",
+"4-7 yrs": "4-7 años",
+"7-10 yrs": "7-10 años",
+"10+ yrs": "10+ años",
+"@Lowest level": "@Nivel mínimo",
+"@Highest level": "@Nivel máximo",
+"Salary range": "Rango salarial",
+"Per year. Roles clearly below the range are flagged or skipped.": "Por año. Los cargos claramente bajo el rango se marcan u omiten.",
+"Minimum": "Mínimo",
+"Target": "Objetivo",
+"Currency": "Moneda",
+"@e.g. 85000": "@p. ej. 85000",
+"@e.g. 120000": "@p. ej. 120000",
+"Work mode": "Modalidad de trabajo",
+"Remote": "Remoto",
+"Hybrid": "Híbrido",
+"On-site": "Presencial",
+"Industries": "Industrias",
+"Pick any that interest you. \"Any industry\" lets the Scout explore freely.": "Elige las que te interesen. «Cualquier industria» deja que el Scout explore libremente.",
+"Outdoor and sport": "Outdoor y deporte",
+"Consumer goods": "Bienes de consumo",
+"Retail and e-commerce": "Retail y e-commerce",
+"Travel and tourism": "Viajes y turismo",
+"Food and beverage": "Alimentos y bebidas",
+"Tech and software": "Tecnología y software",
+"Finance and fintech": "Finanzas y fintech",
+"Health and wellness": "Salud y bienestar",
+"Energy and mining": "Energía y minería",
+"Sustainability and climate": "Sostenibilidad y clima",
+"Education": "Educación",
+"Public sector and nonprofit": "Sector público y sin fines de lucro",
+"Any industry": "Cualquier industria",
+"What you know": "Lo que sabes",
+"Anything you are good at, work or not: cooking, sports, Excel, Power BI, Claude. The Matcher and Coach use it to find hidden strengths.": "Todo en lo que eres bueno, laboral o no: cocina, deportes, Excel, Power BI, Claude. El Matcher y el Coach lo usan para encontrar fortalezas ocultas.",
+"Cooking": "Cocina",
+"Sports": "Deportes",
+"Outdoors": "Aire libre",
+"Excel": "Excel",
+"Power BI": "Power BI",
+"SQL": "SQL",
+"Writing": "Escritura",
+"Design": "Diseño",
+"Photography": "Fotografía",
+"Languages": "Idiomas",
+"Public speaking": "Hablar en público",
+"Data analysis": "Análisis de datos",
+"AI tools": "Herramientas de IA",
+"Project management": "Gestión de proyectos",
+"Sales": "Ventas",
+"Customer service": "Servicio al cliente",
+"@Add your own": "@Añade el tuyo",
+"What interests you": "Lo que te interesa",
+"Topics you care about. The Scout uses these to spot roles you would not think to search for.": "Temas que te importan. El Scout los usa para detectar cargos que no se te ocurriría buscar.",
+"Mountain sports": "Deportes de montaña",
+"Food and cooking": "Comida y cocina",
+"Travel": "Viajes",
+"Technology": "Tecnología",
+"Sustainability": "Sostenibilidad",
+"Fashion": "Moda",
+"Music": "Música",
+"Fitness": "Ejercicio",
+"Art and design": "Arte y diseño",
+"Reading": "Lectura",
+"Gaming": "Videojuegos",
+"Entrepreneurship": "Emprendimiento",
+"Learning new things": "Aprender cosas nuevas",
+"Community": "Comunidad",
+"The Matcher and Coach use it. Upload a PDF or Word file.": "El Matcher y el Coach lo usan. Sube un PDF o un archivo Word.",
+"No CV added yet.": "Aún no se ha añadido un CV.",
+"Upload CV": "Subir CV",
+"Uploading...": "Subiendo...",
+"Uploading is only available to editors of this page": "Subir archivos solo está disponible para editores de esta página",
+"Too large for local storage (3 MB max)": "Demasiado grande para el almacenamiento local (máx. 3 MB)",
+"In your words": "En tus palabras",
+"Backup": "Respaldo",
+"Your data lives in this browser. Save a backup file, or restore one.": "Tus datos viven en este navegador. Guarda un archivo de respaldo o restaura uno.",
+"Save backup": "Guardar respaldo",
+"Restore backup": "Restaurar respaldo",
+"@Click to talk": "@Haz clic para hablar",
+"Stage": "Etapa",
+"Where": "Dónde",
+"not listed": "no indicado",
+"Status": "Estado",
+"Fit / chance": "Ajuste / opción real",
+"not scored": "sin puntuar",
+"Caveats": "Salvedades",
+"Real-chance factors": "Factores de opción real",
+"Matcher's broad advice": "Consejo general del Matcher",
+"@Broad advice": "@Consejo general",
+"Coach's kit": "Kit del Coach",
+"CV angle": "Enfoque del CV",
+"Cover note or outreach": "Carta de presentación o mensaje de contacto",
+"Approach": "Acercamiento",
+"Copy cover note": "Copiar carta",
+"Your decision": "Tu decisión",
+"Reason, so the team learns": "Motivo, para que el equipo aprenda",
+"Open the posting": "Abrir la oferta",
+"@Stage": "@Etapa",
+"Not running yet": "Aún no se ejecuta",
+"on request": "a pedido",
+"after each Scout run": "después de cada ejecución del Scout",
+"weekdays, mornings": "días hábiles, por la mañana",
+"weekly, plus after each application": "semanal, y tras cada postulación",
+"Tailors your CV, note and approach to one role.": "Adapta tu CV, tu nota y tu acercamiento a un cargo.",
+"Source for every tailored version.": "Base de cada versión adaptada.",
+"Posting": "Oferta",
+"Mirrors its priorities and language.": "Refleja sus prioridades y su lenguaje.",
+"Story bank": "Banco de historias",
+"Your strongest, true examples.": "Tus mejores ejemplos, verdaderos.",
+"Role card": "Ficha del cargo",
+"Saves drafts for you to edit.": "Guarda borradores para que los edites.",
+"A veteran career coach who has seen every kind of hiring process. Patient, practical and fond of the question \"what are they really asking for?\"": "Un coach de carrera veterano que ha visto todo tipo de procesos de selección. Paciente, práctico y aficionado a la pregunta «¿qué piden realmente?».",
+"Turns the Matcher's advice into a tailored CV angle, a cover note and an approach plan, one role at a time. Uses only what is true.": "Convierte el consejo del Matcher en un enfoque de CV a medida, una carta de presentación y un plan de acercamiento, un cargo a la vez. Usa solo lo que es verdad.",
+"When you move a role to Preparing, drafts a tailored CV angle, a cover note or outreach message, and an approach plan.": "Cuando mueves un cargo a En preparación, redacta un enfoque de CV a medida, una carta o mensaje de contacto y un plan de acercamiento.",
+"Uses only what is true, per the Never-claim rule in your profile": "Usa solo lo que es verdad, según la regla de «Nunca afirmar» de tu perfil",
+"Never applies on your behalf": "Nunca se postula en tu nombre",
+"One or two roles at a time": "Uno o dos cargos a la vez",
+"Measures each role against your background without flattery. Tells you where you fit, where you don't, and how likely you are to get it.": "Mide cada cargo contra tu trayectoria, sin adulación. Te dice dónde encajas, dónde no y qué tan probable es que lo consigas.",
+"Compares each posting with your profile, then adjusts for work status, language, local experience, employer culture and referral access.": "Compara cada oferta con tu perfil y luego ajusta por situación laboral, idioma, experiencia local, cultura del empleador y acceso a referidos.",
+"Spanish and English together, for LatAm-facing roles": "Español e inglés juntos, para cargos orientados a Latinoamérica",
+"Using P&L analysis to flag problems and drive decisions": "Uso del análisis de P&L para detectar problemas y guiar decisiones",
+"Postings asking 5+ years of strategy or senior B2B sales": "Ofertas que piden 5+ años de estrategia o ventas B2B senior",
+"SQL, experiment or data-modelling requirements": "Requisitos de SQL, experimentos o modelado de datos",
+"Industry experience you lack, such as tourism supply or apparel planning": "Experiencia de industria que te falta, como oferta turística o planificación de vestuario",
+"Team-leadership requirements": "Requisitos de liderazgo de equipos",
+"States the gap and what would close it": "Indica la brecha y qué la cerraría",
+"Ranks priority area first, then chance, then fit": "Ordena primero el área prioritaria, luego la opción real y luego el ajuste",
+"Ranks roles by fit and your real odds of getting them.": "Ordena los cargos por ajuste y tus probabilidades reales de conseguirlos.",
+"Your background, constraints and goals.": "Tu trayectoria, restricciones y metas.",
+"Rubric": "Rúbrica",
+"Fit %, chance %, tier.": "% de ajuste, % de opción real, nivel.",
+"Your likes and passes.": "Tus me gusta y tus descartes.",
+"A hound. Casts a wide net across every industry and region inside your borders and brings back anything worth a look. Checks that each role is really live before it reaches you.": "Un sabueso. Lanza una red amplia por todas las industrias y regiones dentro de tus límites y trae todo lo que valga la pena. Comprueba que cada cargo esté realmente vigente antes de que llegue a ti.",
+"Casts a wide net across every industry and region inside your profile, not a fixed list of employers, and brings back anything worth a look. Each role is confirmed live on the employer's own page first.": "Lanza una red amplia por todas las industrias y regiones dentro de tu perfil, no una lista fija de empleadores, y trae todo lo que valga la pena. Cada cargo se confirma primero en la página del propio empleador.",
+"Your profile sets the borders. It is not a list of companies to check": "Tu perfil fija los límites. No es una lista de empresas para revisar",
+"Priority area is covered first, every run": "El área prioritaria se cubre primero, en cada ejecución",
+"A role counts only if live on the employer's own page": "Un cargo cuenta solo si está vigente en la página del propio empleador",
+"Max 2 roles per company, up to 6 new roles per run. Zero is fine": "Máx. 2 cargos por empresa y hasta 6 nuevos por ejecución. Cero está bien",
+"Skips anything on your avoid list or already passed or applied": "Omite lo que esté en tu lista de evitar o que ya descartaste o postulaste",
+"A hound: sniffs out options everywhere inside your borders.": "Un sabueso: olfatea opciones por todas partes dentro de tus límites.",
+"Web search": "Búsqueda web",
+"Searches widely for openings, news and local boards across industries and regions.": "Busca ampliamente ofertas, noticias y portales locales en todas las industrias y regiones.",
+"Page reader": "Lector de páginas",
+"Opens the employer's own posting to confirm it is live and read the real requirements.": "Abre la oferta del propio empleador para confirmar que está vigente y leer los requisitos reales.",
+"Employer boards": "Portales de empleadores",
+"Career pages and applicant-tracking systems such as Lever, Greenhouse and Workday.": "Páginas de carreras y sistemas de seguimiento de postulantes como Lever, Greenhouse y Workday.",
+"Leads": "Pistas",
+"Aggregators, chambers, associations and local news. Leads only, always confirmed on the employer's page.": "Agregadores, cámaras, asociaciones y noticias locales. Solo pistas, siempre confirmadas en la página del empleador.",
+"Skips roles you passed and sources that failed.": "Omite cargos que descartaste y fuentes que fallaron.",
+"Keeps the whole process healthy. Follows up on applications, reviews what you like and pass, answers your training questions and proposes changes to the team.": "Mantiene todo el proceso en orden. Hace seguimiento de las postulaciones, revisa lo que te gusta y descartas, responde tus preguntas de entrenamiento y propone cambios al equipo.",
+"Score the 20 existing roles for real chance": "Puntuar los 20 cargos existentes por opción real",
+"Check the Tourism Whistler portal by hand weekly, since automated reads are blocked": "Revisar a mano cada semana el portal de Tourism Whistler, ya que las lecturas automáticas están bloqueadas",
+"Spend your time on Strong and Stretch roles": "Dedica tu tiempo a cargos Fuertes y Alcanzables",
+"Long shots rarely convert without a referral. Use the Matcher's tiers to decide where each week's effort goes.": "Los cargos difíciles rara vez se concretan sin un referido. Usa los niveles del Matcher para decidir dónde va el esfuerzo de cada semana.",
+"SQL and basic data analysis": "SQL y análisis de datos básico",
+"Several roles you liked ask for SQL or experiment modelling. A short applied course plus one small project you can mention would close that gap.": "Varios cargos que te gustaron piden SQL o modelado de experimentos. Un curso aplicado corto más un proyecto pequeño que puedas mencionar cerraría esa brecha.",
+"Merchandise and demand planning fundamentals": "Fundamentos de merchandising y planificación de demanda",
+"Planning roles ask for open-to-buy and sell-through analysis. An introductory course would let you speak to it credibly.": "Los cargos de planificación piden análisis de open-to-buy y sell-through. Un curso introductorio te permitiría hablar del tema con credibilidad.",
+"B2B negotiation and partner management": "Negociación B2B y gestión de socios",
+"Evidence of leading people or projects": "Evidencia de liderar personas o proyectos",
+"Feeds what it learns back to the other three.": "Devuelve lo que aprende a los otros tres.",
+"Tracks applications, chases follow-ups, reviews your feedback and proposes changes to the other helpers.": "Sigue las postulaciones, persigue los seguimientos, revisa tus comentarios y propone cambios a los otros ayudantes.",
+"One short digest instead of many pings": "Un resumen corto en vez de muchos avisos",
+"Retires sources that keep failing": "Retira las fuentes que siguen fallando",
+"Keeps the pipeline healthy and tunes the team.": "Mantiene sano el proceso y afina al equipo.",
+"Scheduled tasks": "Tareas programadas",
+"Runs the team on a timetable.": "Ejecuta al equipo según un calendario.",
+"Records what worked and retires dead sources.": "Registra lo que funcionó y retira las fuentes muertas.",
+"Notifications": "Notificaciones",
+"Phone and email, only when something needs you.": "Celular y correo, solo cuando algo te necesita.",
+"Employer career pages and applicant-tracking boards load fully and are the most reliable source. Aggregators and local boards are leads only.": "Las páginas de carreras de empleadores y los sistemas de seguimiento cargan completos y son la fuente más confiable. Los agregadores y portales locales son solo pistas.",
+"go2hr and aggregator results are often stale (months old). Woodfibre LNG posts mostly technical roles": "Los resultados de go2hr y agregadores suelen estar desactualizados (de hace meses). Woodfibre LNG publica sobre todo cargos técnicos",
+"Never claim a P&L. Entry to mid level only. No IT or engineering-heavy roles. No mandatory Portuguese": "Nunca afirmar un P&L. Solo nivel inicial a intermedio. Sin cargos de TI o muy de ingeniería. Sin portugués obligatorio",
+"Living abroad pauses the Canadian citizenship count (about 3 years in Canada within 5 are needed)": "Vivir en el extranjero pausa el conteo de ciudadanía canadiense (se necesitan unos 3 años en Canadá dentro de 5)",
+"Max 2 roles per company. Your preferences are borders for the search, not a list of companies": "Máx. 2 cargos por empresa. Tus preferencias son límites de búsqueda, no una lista de empresas",
+"August unemployment held at 6.4% while employment fell by 41,700.": "El desempleo de agosto se mantuvo en 6,4% mientras el empleo cayó en 41.700.",
+"Canada's job market is soft": "El mercado laboral de Canadá está débil",
+"Expect fewer openings. Focus on Strong and Stretch matches and work referrals.": "Espera menos ofertas. Enfócate en cargos Fuertes y Alcanzables y trabaja los referidos.",
+"A leading outdoor group raised its 2026 revenue growth forecast to 24%, with its technical apparel brand up 33% in Q2.": "Un grupo líder de outdoor elevó su proyección de crecimiento de ingresos 2026 a 24%, con su marca de ropa técnica creciendo 33% en el T2.",
+"Outdoor apparel is still growing": "La ropa outdoor sigue creciendo",
+"Growing employers hire for planning, wholesale and merchandising roles. Outdoor is your preferred industry.": "Los empleadores en crecimiento contratan para planificación, ventas mayoristas y merchandising. Outdoor es tu industria preferida.",
+"Partner and supplier management, market launch and commercial strategy at a LatAm company (Despegar: Global Partners, Commercial Manager New Business, Strategy & Planning)": "Gestión de socios y proveedores, lanzamiento de mercados y estrategia comercial en una empresa latinoamericana (Despegar: Global Partners, Commercial Manager New Business, Strategy & Planning)",
+"DoorDash Senior Associate, New Verticals and Arc'teryx Merchandise Planner": "DoorDash Senior Associate, New Verticals y Arc'teryx Merchandise Planner",
+"Sea to Sky Gondola Sales Coordinator, lululemon Associate Merchant, and three DoorDash roles (New Verticals Associate Manager, Retention Marketing, Partner Manager) passed with no reason given": "Sea to Sky Gondola Sales Coordinator, lululemon Associate Merchant y tres cargos de DoorDash (New Verticals Associate Manager, Retention Marketing, Partner Manager) descartados sin dar motivo",
+"Blocked or unreadable: Tourism Whistler Dayforce portal, SOARE (Facebook only), squamish.ca job page": "Bloqueado o ilegible: portal Dayforce de Tourism Whistler, SOARE (solo Facebook), página de empleos de squamish.ca",
+"Project Expedition BD Manager: \"Weak company\"": "Project Expedition BD Manager: «Empresa débil»",
+"Arc'teryx Omnichannel / Digital Experience: \"Not my field\" (digital and technical side)": "Arc'teryx Omnichannel / Digital Experience: «No es mi área» (lado digital y técnico)",
+"The board holds the 20 roles from the old Job Wall. Today's Scout run found no new roles: Woodfibre posts mostly technical roles, the Gondola role was passed, and the Tourism Whistler portal could not be read.": "El tablero tiene los 20 cargos del antiguo Job Wall. La ejecución de hoy del Scout no encontró cargos nuevos: Woodfibre publica sobre todo cargos técnicos, el cargo de la Gondola fue descartado y el portal de Tourism Whistler no se pudo leer.",
+"@Characters": "@Personajes",
+"@Language": "@Idioma",
+"Animals": "Animales",
+"People": "Personas",
+"Aliens": "Alienígenas",
+"Search prompt copied. Paste it into Claude with web search on, then add the roles you like under “Add a role yourself”.": "Prompt de búsqueda copiado. Pégalo en Claude con la búsqueda web activada y luego agrega los cargos que te gusten en “Añade un cargo tú mismo”.",
+"Copy this prompt into Claude with web search on, then add the roles you like under “Add a role yourself”.": "Copia este prompt en Claude con la búsqueda web activada y luego agrega los cargos que te gusten en “Añade un cargo tú mismo”.",
+"1 new find to send to the Matcher or discard": "1 hallazgo nuevo para enviar al Matcher o descartar",
+"Scout →": "Scout →",
+"Looks across every industry and region inside your profile and brings back anything worth a look, confirmed on the employer's own page.": "Busca en todas las industrias y regiones dentro de tu perfil y trae todo lo que vale la pena mirar, confirmado en la página del empleador.",
+"Click Scout to see what they are up to.": "Haz clic en Scout para ver qué está haciendo.",
+"Copy search prompt": "Copiar instrucción de búsqueda",
+"Priority": "Prioridad",
+"How Scout decides": "Cómo decide Scout",
+"Talk to the Scout": "Hablar con Scout",
+"Click Matcher to see what they are up to.": "Haz clic en Matcher para ver qué está haciendo.",
+"Your 100% match": "Tu rol 100% ideal",
+"Write it from my profile": "Escribirlo desde mi perfil",
+"Describe the perfect role once and the Matcher scores every role against it. I can write a first version from your profile, and you correct it.": "Describe el rol perfecto una vez y el Matcher puntúa cada rol contra él. Puedo escribir una primera versión desde tu perfil y tú la corriges.",
+"Nothing here yet. Send finds from the Scout and I score each one on my own.": "Aún no hay nada. Envía hallazgos del Scout y yo puntúo cada uno por mi cuenta.",
+"Compare two roles": "Comparar dos roles",
+"Pick two roles and the Matcher puts them side by side and says which to go for first.": "Elige dos roles y el Matcher los pone lado a lado y dice a cuál ir primero.",
+"Role A": "Rol A",
+"Role B": "Rol B",
+"Choose a role": "Elige un rol",
+"You need at least two roles with the Matcher to compare them.": "Necesitas al menos dos roles con el Matcher para compararlos.",
+"compares the posting's real requirements with your background and with your 100% match.": "compara los requisitos reales del aviso con tu experiencia y con tu rol 100% ideal.",
+"How Matcher decides": "Cómo decide Matcher",
+"Talk to the Matcher": "Hablar con Matcher",
+"Click Coach to see what they are up to.": "Haz clic en Coach para ver qué está haciendo.",
+"Your CV, in general": "Tu CV, en general",
+"Review my CV": "Revisar mi CV",
+"Paste your CV text in your profile and I will give you general tips on it.": "Pega el texto de tu CV en tu perfil y te doy consejos generales.",
+"Tells you what to change in your CV for that posting, using only what is true.": "Te dice qué cambiar en tu CV para ese aviso, usando solo lo que es verdad.",
+"You tick the changes you approve and the Coach writes your CV for the role.": "Marcas los cambios que apruebas y el Coach escribe tu CV para el rol.",
+"Drafts a cover note and plans the approach: who to contact, referral angle, timing.": "Redacta una carta breve y planifica el enfoque: a quién contactar, referidos, momento.",
+"How Coach decides": "Cómo decide Coach",
+"Talk to the Coach": "Hablar con Coach",
+"Applications": "Postulaciones",
+"To follow up": "Para seguimiento",
+"Click Supervisor to see what they are up to.": "Haz clic en Supervisor para ver qué está haciendo.",
+"Your applications": "Tus postulaciones",
+"Every role you applied to lives here. Come back when they answer and tell me what happened: it feeds the follow-ups and the advice.": "Cada rol al que postulaste vive aquí. Vuelve cuando respondan y cuéntame qué pasó: alimenta el seguimiento y los consejos.",
+"No applications yet. Mark a role as applied and it shows up here.": "Aún no hay postulaciones. Marca un rol como postulado y aparece aquí.",
+"Add an application you made elsewhere": "Agregar una postulación hecha en otro lugar",
+"Date applied (YYYY-MM-DD)": "Fecha de postulación (AAAA-MM-DD)",
+"Add to my applications": "Agregar a mis postulaciones",
+"What your applications tell us": "Lo que dicen tus postulaciones",
+"Log what happens after you apply. With a few results I can tell you what is working.": "Registra qué pasa después de postular. Con algunos resultados puedo decirte qué funciona.",
+"What would make you say no to an otherwise great role?": "¿Qué te haría decir que no a un rol que por lo demás es excelente?",
+"A long commute": "Un trayecto largo",
+"Pay below my range": "Pago bajo mi rango",
+"A company I do not like": "Una empresa que no me gusta",
+"Too much travel": "Demasiados viajes",
+"Rigid hours": "Horarios rígidos",
+"How Supervisor decides": "Cómo decide Supervisor",
+"Talk to the Supervisor": "Hablar con Supervisor",
+"Tell me what happens after you apply and I will spot what works.": "Cuéntame qué pasa después de postular y detecto qué funciona.",
+"Watches every step, follows up after you apply, learns from what happens, and suggests skills and where to focus.": "Vigila cada paso, hace seguimiento después de postular, aprende de lo que pasa y sugiere habilidades y dónde enfocarte.",
+"· Finds roles": "· Encuentra roles",
+"What it does for you:": "Qué hace por ti:",
+"Raised on the mountain trails, Scout learned to follow faint scents others missed. Never trusts a lead until it is confirmed at the source.": "Criado en senderos de montaña, Scout aprendió a seguir rastros que otros pasaron por alto. Nunca confía en una pista hasta confirmarla en la fuente.",
+"Visit Scout": "Visitar a Scout",
+"· Scores fit and real chance": "· Puntúa ajuste y probabilidad real",
+"The moment you send a role, the Matcher scores it. No button to press.": "En cuanto envías un rol, el Matcher lo puntúa. Sin botón que apretar.",
+"Visit Matcher": "Visitar a Matcher",
+"· Prepares applications": "· Prepara postulaciones",
+"Tells you what to change in your CV. You approve, and it writes your CV for that role.": "Te dice qué cambiar en tu CV. Tú apruebas y escribe tu CV para ese rol.",
+"Visit Coach": "Visitar a Coach",
+"· Follow-up and oversight": "· Seguimiento y supervisión",
+"Keeps the folder of roles you applied to. You tell it what they answered, and it follows up.": "Guarda la carpeta de roles a los que postulaste. Le cuentas qué respondieron y hace seguimiento.",
+"Visit Supervisor": "Visitar a Supervisor",
+"Words we use": "Palabras que usamos",
+"Borders": "Límites",
+"The limits in your profile: where, level, pay and what to avoid. The Scout searches freely inside them.": "Los límites de tu perfil: dónde, nivel, pago y qué evitar. El Scout busca libremente dentro de ellos.",
+"Priority area": "Zona prioritaria",
+"A place you would love to work. The Scout searches it first, every time.": "Un lugar donde te encantaría trabajar. El Scout lo busca primero, siempre.",
+"How well the posting's real requirements match your background, from 0 to 100.": "Qué tanto coinciden los requisitos reales del aviso con tu experiencia, de 0 a 100.",
+"Real chance": "Probabilidad real",
+"Fit adjusted for things that decide hiring: work status, language, local experience, culture, referrals and years asked. Honest odds, not hope.": "Ajuste corregido por lo que decide una contratación: situación laboral, idioma, experiencia local, cultura, referidos y años pedidos. Probabilidades honestas, no esperanza.",
+"Strong, Stretch, Long shot": "Fuerte, Ambicioso, Difícil",
+"Strong: a real chance of 70 or more. Stretch: 55 to 69, worth a try. Long shot: under 55, rarely worth the effort without a referral.": "Fuerte: probabilidad real de 70 o más. Ambicioso: 55 a 69, vale la pena intentar. Difícil: menos de 55, rara vez vale el esfuerzo sin un referido.",
+"An example of the perfect role. You correct it, and the Matcher scores every role against it.": "Un ejemplo del rol perfecto. Tú lo corriges y el Matcher puntúa cada rol contra él.",
+"Track": "Pista",
+"Priority is your priority area. Home is the rest of your country. Abroad is anywhere else.": "Prioridad es tu zona prioritaria. Casa es el resto de tu país. Exterior es cualquier otro lugar.",
+"Open and Listed": "Abierto y Listado",
+"Open: the posting page was confirmed live. Listed: it is on the employer's list but the page would not load.": "Abierto: se confirmó que la página del aviso está activa. Listado: está en la lista del empleador pero la página no cargó.",
+"Expired": "Expirado",
+"A role with no progress for 3 weeks leaves your board by itself, so the list stays alive.": "Un rol sin avance por 3 semanas sale solo del tablero, para que la lista siga viva.",
+"Outcome": "Resultado",
+"What happened after you applied: waiting, they replied, interview, offer, rejected or no reply.": "Qué pasó después de postular: esperando, respondieron, entrevista, oferta, rechazado o sin respuesta.",
+"Every like, discard, answer and application result improves the next search.": "Cada me gusta, descarte, respuesta y resultado de postulación mejora la próxima búsqueda.",
+"These are borders, not a shopping list: the Scout looks wide inside them. Answer what you can. You can skip anything and come back.": "Son límites, no una lista de compras: el Scout busca ampliamente dentro de ellos. Responde lo que puedas. Puedes saltarte cualquier cosa y volver.",
+"1. Basics": "1. Básicos",
+"2. Level and pay": "2. Nivel y pago",
+"3. Work and industries": "3. Trabajo e industrias",
+"4. You": "4. Tú",
+"5. CV and words": "5. CV y palabras",
+"6. Finish": "6. Terminar",
+"What the team should call you.": "Cómo debe llamarte el equipo.",
+"A city or region. Add \"remote\" if you can work from anywhere.": "Una ciudad o región. Agrega \"remoto\" si puedes trabajar desde cualquier lugar.",
+"A place you would love to work. The Scout searches it first. Leave it empty if you have none.": "Un lugar donde te encantaría trabajar. El Scout lo busca primero. Déjalo vacío si no tienes.",
+"Words that identify that area": "Palabras que identifican esa zona",
+"Words that appear in job locations there, separated by commas.": "Palabras que aparecen en las ubicaciones de los empleos allí, separadas por comas.",
+"Where else to look, in order": "Dónde más buscar, en orden",
+"The Scout searches the first one first, then moves down the list.": "El Scout busca primero en el primero y luego sigue bajando por la lista.",
+"Next": "Siguiente",
+"Show everything on one page": "Mostrar todo en una página",
+"Profile complete": "Perfil completo",
+"e.g. Alex": "p. ej. Alex",
+"e.g. Vancouver, BC": "p. ej. Vancouver, BC",
+"e.g. whistler, squamish": "p. ej. whistler, squamish",
+"e.g. BC, Canada, remote": "p. ej. BC, Canadá, remoto",
+"Waiting for a score.": "Esperando puntuación.",
+"Score now": "Puntuar ahora",
+"Copy scoring prompt": "Copiar instrucción de puntuación",
+"Sent to the Matcher. It scores it on its own.": "Enviado al Matcher. Lo puntúa por su cuenta.",
+"To tailor your CV I need its text.": "Para adaptar tu CV necesito su texto.",
+"Paste it in your profile": "Pégalo en tu perfil",
+".": ".",
+"What should I change?": "¿Qué debería cambiar?",
+"Waiting": "Esperando",
+"They replied": "Respondieron",
+"Interview": "Entrevista",
+"Offer": "Oferta",
+"Rejected": "Rechazado",
+"No reply": "Sin respuesta",
+"What happened?": "¿Qué pasó?",
+"e.g. They asked for a call on Tuesday": "p. ej. Pidieron una llamada el martes",
+"Reading your CV...": "Leyendo tu CV...",
+"I could not read text from that file. Paste the text below.": "No pude leer texto de ese archivo. Pega el texto abajo.",
+"CV read. Check the text below.": "CV leído. Revisa el texto de abajo.",
+"CV text (read from your file, or paste it)": "Texto del CV (leído de tu archivo, o pégalo)",
+"The Coach edits this text to tailor your CV, and the Matcher reads it. Upload a PDF or Word file above and it fills in by itself.": "El Coach edita este texto para adaptar tu CV, y el Matcher lo lee. Sube un PDF o Word arriba y se completa solo.",
+"Hide": "Ocultar",
+"Show": "Mostrar",
+"Hidden. Show it to correct it.": "Oculto. Muéstralo para corregirlo.",
+"Hidden. Show them to read again.": "Oculto. Muéstralos para leerlos de nuevo.",
+"Last search": "Última búsqueda",
+"View posting": "Ver oferta",
+"The Scout searches the web and adds roles when you press Run search now, and can also run on its own a few times a week.": "El Scout busca en la web y agrega roles cuando presionas Buscar ahora, y también puede correr solo unas veces por semana.",
+"Find roles like this": "Buscar roles como este",
+"Write your 100% match first.": "Primero escribe tu rol 100% ideal.",
+"Asking the Scout...": "Consultando al Scout...",
+"The Scout is looking for roles like your 100% match. New finds appear in the Scout tab.": "El Scout está buscando roles como tu 100% ideal. Los hallazgos nuevos aparecen en la pestaña Scout.",
+"Search prompt copied. Paste it into Claude with web search on, then add what you like in the Scout tab.": "Instrucción copiada. Pégala en Claude con búsqueda web activada y luego agrega lo que te guste en la pestaña Scout.",
+"Could not copy. Use Copy search prompt in the Scout tab.": "No se pudo copiar. Usa Copiar instrucción de búsqueda en la pestaña Scout.",
+"Review of your search": "Revisión de tu búsqueda",
+"Review my search": "Revisar mi búsqueda",
+"Review again": "Revisar de nuevo",
+"I look at your profile, your roles and what happened with them, and tell you where to focus.": "Miro tu perfil, tus roles y lo que pasó con ellos, y te digo dónde enfocarte.",
+"Reviewing...": "Revisando...",
+"Not available here.": "No disponible aquí.",
+"Could not review right now. Try again.": "No se pudo revisar ahora. Inténtalo de nuevo.",
+"Done.": "Listo.",
+"e.g. Sea-to-Sky": "p. ej. Sea-to-Sky",
+"Your LinkedIn": "Tu LinkedIn",
+"Optional. I cannot open LinkedIn for you, so the team reads what you give it here: your link, plus the text of your profile.": "Opcional. No puedo abrir LinkedIn por ti, así que el equipo lee lo que pongas aquí: tu enlace y el texto de tu perfil.",
+"Profile link": "Enlace del perfil",
+"e.g. linkedin.com/in/your-name": "p. ej. linkedin.com/in/tu-nombre",
+"Upload my LinkedIn PDF": "Subir mi PDF de LinkedIn",
+"LinkedIn text (read from your file, or paste it)": "Texto de LinkedIn (leído de tu archivo, o pégalo)",
+"Paste your About, Experience and Skills.": "Pega tu Acerca de, Experiencia y Aptitudes.",
+"On LinkedIn, open your profile, choose More, then Save to PDF, and upload that file here. The team uses it with your CV.": "En LinkedIn, abre tu perfil, elige Más y luego Guardar como PDF, y sube ese archivo aquí. El equipo lo usa junto con tu CV.",
+"LinkedIn text read. Check it below.": "Texto de LinkedIn leído. Revísalo abajo.",
+"Overview": "Campamento base",
+"Base Camp": "Campamento base"
+};
+let LANG='en';try{LANG=localStorage.getItem('jd-lang')||((navigator.language||'').toLowerCase().startsWith('es')?'es':'en')}catch(e){}
+const pl=(n,a,b)=>n==1?a:b;
+const RX=[
+ [/^Click (\w+) to see what they are up to\.$/,m=>`Haz clic en ${m[1]} para ver qué está haciendo.`],
+ [/^Visit (.+)$/,m=>`Visitar a ${m[1]}`],
+ [/^How (?:the )?(\w+) decides$/,m=>`Cómo decide ${m[1]}`],
+ [/^· (.+)$/,m=>'· '+T(m[1])],
+ [/^Talk to the (.+)$/,m=>`Hablar con ${m[1]}`],
+ [/^(\d+) new finds? to send to the Matcher or discard$/,m=>`${m[1]} ${pl(m[1],'hallazgo nuevo','hallazgos nuevos')} para enviar al Matcher o descartar`],
+ [/^(\d+) roles? with the Matcher not scored yet$/,m=>`${m[1]} ${pl(m[1],'cargo con el Matcher sin puntuar','cargos con el Matcher sin puntuar')}`],
+ [/^(\d+) open questions? for you$/,m=>`${m[1]} ${pl(m[1],'pregunta abierta','preguntas abiertas')} para ti`],
+ [/^chance (\d+)%$/,m=>`opción real ${m[1]}%`],[/^fit (\d+)%$/,m=>`ajuste ${m[1]}%`],
+ [/^(.*), confirmed (.*)$/,m=>`${m[1]}, confirmado ${m[2]}`],
+ [/^added (.+)$/,m=>`añadido ${m[1]}`],[/^saved (.+)$/,m=>`guardado ${m[1]}`],
+ [/^Today: (\d+) added$/,m=>`Hoy: ${m[1]} ${pl(m[1],'añadido','añadidos')}`],
+ [/^(\d{4}-\d{2}-\d{2}): (\d+) added$/,m=>`${m[1]}: ${m[2]} ${pl(m[2],'añadido','añadidos')}`],
+ [/^(.*) · priority: (.*)$/,m=>`${m[1]} · prioridad: ${m[2]}`],
+ [/^\s*· priority: (.*)$/,m=>`· prioridad: ${m[1]}`],
+ [/^To (whole process|Scout|Matcher|Coach|Supervisor) · (.*)$/,m=>`Para ${T(m[1])} · ${m[2]}`],
+ [/^Could not start the search \((.*)\)\.$/,m=>`No se pudo iniciar la búsqueda (${m[1]}).`],
+ [/^CV on file \((.*)\)\.$/,m=>`CV cargado (${m[1]}).`],
+ [/^Base Camp is where the whole team and your whole search meet\. Job Desk is a small team that finds, vets, prepares and tracks opportunities for (.+?)\. Each option moves left to right\. You make every call, and nothing is ever applied for you\.$/,m=>`El campamento base es el lugar donde se juntan todo el equipo y toda tu búsqueda. Job Desk es un pequeño equipo que encuentra, evalúa, prepara y sigue oportunidades para ${m[1]==='you'?'ti':m[1]}. Cada opción avanza de izquierda a derecha. Tú tomas cada decisión y nunca se postula nada por ti.`],
+ [/^(.*)\. Hidden\. Show it to correct it\.$/,m=>`${m[1]}. Oculto. Muéstralo para corregirlo.`],[/^(\d+) tips saved\. Hidden\. Show them to read again\.$/,m=>`${m[1]} consejos guardados. Ocultos. Muéstralos para leerlos de nuevo.`],
+ [/^expires tomorrow$/,m=>'vence mañana'],[/^expires in (\d+) days$/,m=>`vence en ${m[1]} días`],
+ [/^(.*) · applied (today|yesterday|\d+ days ago)$/,m=>`${m[1]} · postulado ${m[2]==='today'?'hoy':m[2]==='yesterday'?'ayer':'hace '+m[2].replace(' days ago',' días')}`],
+ [/^No news for (\d+) days\. Time to follow up\.$/,m=>`Sin novedades hace ${m[1]} días. Hora de hacer seguimiento.`],
+ [/^(.*) · (\d+) days? left$/,m=>`${m[1]} · quedan ${m[2]} días`],
+ [/^(.*) \/ not scored$/,m=>`${m[1]} / sin puntuar`],
+];
+
+const TC={},TQ=new Set(),TF=new Set();let tqT=0,tqBusy=false,SMP;
+try{Object.assign(TC,JSON.parse(localStorage.getItem('jd-tc')||'{}'))}catch(e){}
+function looksEn(t){if(t.length<28||t.split(/\s+/).length<5)return false;if(/[áéíóúñ¿¡]/i.test(t))return false;return /\b(the|and|of|to|for|in|with|is|are|on|at|your|you|a|an|that|this|from|by)\b/i.test(t)}
+function flushTQ(){clearTimeout(tqT);tqT=setTimeout(async()=>{
+  if(tqBusy||LANG!=='es'||!TQ.size)return;
+  try{if(localStorage.getItem('jd-lang')!=='es')return}catch(e){return}
+  tqBusy=true;const batch=[...TQ].slice(0,30);batch.forEach(x=>TQ.delete(x));
+  try{if(SMP===undefined)SMP=await claude.use('sample');
+   if(!SMP){batch.forEach(x=>TF.add(x));TQ.clear();return}
+   const r=await SMP.json('Translate each string to neutral Latin American Spanish. Keep names, numbers, company names, job titles and proper nouns unchanged. Return ONLY a JSON array of strings, same length and order.\n'+JSON.stringify(batch),{modelTier:'quick'});
+   if(Array.isArray(r)&&r.length===batch.length){batch.forEach((x,i)=>{if(typeof r[i]==='string'&&r[i])TC[x]=r[i];else TF.add(x)});try{localStorage.setItem('jd-tc',JSON.stringify(TC))}catch(e){}}
+   else batch.forEach(x=>TF.add(x))}
+  catch(e){batch.forEach(x=>TF.add(x));TQ.clear()}
+  finally{tqBusy=false;xlate();if(TQ.size)flushTQ()}},700)}
+function T(s){if(LANG!=='es'||!s)return s;const t=s.trim();if(!t)return s;if(ES[t]!==undefined)return s.replace(t,ES[t]);for(const [r,f] of RX){const m=t.match(r);if(m)return s.replace(t,f(m))}return s}
+function TA(v){if(LANG!=='es'||!v)return v;if(ES['@'+v]!==undefined)return ES['@'+v].replace(/^@/,'');for(const [r,f] of RX){const m=v.match(r);if(m)return f(m)}return ES[v]!==undefined?ES[v]:v}
+function xlate(root){
+  if(LANG!=='es')return;
+  const w=document.createTreeWalker(root||document.body,NodeFilter.SHOW_TEXT);let n;const nodes=[];
+  while(n=w.nextNode()){const p=n.parentElement;if(!p||p.closest('script,style,textarea'))continue;nodes.push(n)}
+  for(const x of nodes){let v=T(x.nodeValue);if(v===x.nodeValue){const t=x.nodeValue.trim();if(TC[t])v=x.nodeValue.replace(t,TC[t]);else if(looksEn(t)&&!TF.has(t))TQ.add(t)}if(v!==x.nodeValue)x.nodeValue=v}
+  if(TQ.size)flushTQ();
+  (root||document.body).querySelectorAll('[placeholder],[aria-label],[title]').forEach(e=>['placeholder','aria-label','title'].forEach(a=>{const v=e.getAttribute(a);if(v){const t=TA(v);if(t!==v)e.setAttribute(a,t)}}));
+}
+let xraf=0;const xmo=new MutationObserver(()=>{if(LANG!=='es')return;cancelAnimationFrame(xraf);xraf=requestAnimationFrame(()=>xlate())});
+function setLang(l){LANG=l;try{localStorage.setItem('jd-lang',l)}catch(e){}document.documentElement.lang=l;syncLang();render()}
+function syncLang(){document.querySelectorAll('.lang button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===LANG)))}
+document.addEventListener('click',e=>{const b=e.target.closest('.lang button');if(b&&b.dataset.lang)setLang(b.dataset.lang)});
+xmo.observe(document.body,{childList:true,subtree:true,characterData:true});
+document.documentElement.lang=LANG;syncLang();
+let raf=0;const sched=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(render)};
+(async()=>{
+  setRoute();
+  try{
+    const user=await claude.use('user');
+    if(user&&user.can){const w=await user.can('data.write');if(w===false)canWrite=false}
+    db=await claude.use('db');
+  }catch(e){}
+  if(!db)return;
+  for(const k of ['roles','agents','memory','questions','news','profile','training','profiles','extras'])
+    db.collection(k).onSnapshot(snap=>{const o={};snap.docs.forEach(d=>o[d.id]=d.data());RAW[k]=o;scope();if(k==='roles')sweep();sched()},err=>console.warn(k,err));
+})();
+</script>
+</body></html>
